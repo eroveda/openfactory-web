@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
+import { PinCard } from "../components/PinCard";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   Box, 
   Plus, 
@@ -17,7 +21,9 @@ import {
   ArrowLeft,
   ArrowRight,
   AlertCircle,
-  Check
+  Check,
+  Bell,
+  Edit2
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 

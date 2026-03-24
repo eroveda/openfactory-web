@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { Button } from "../components/ui/button";
-import { ArrowRight, Box, Lightbulb, Package, Zap } from "lucide-react";
+import { ArrowRight, Box, Lightbulb, Package, Zap, Check } from "lucide-react";
+import { motion } from "motion/react";
 
 export function Landing() {
   return (
@@ -20,7 +21,12 @@ export function Landing() {
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <div className="max-w-3xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="max-w-3xl mx-auto"
+        >
           <h1 className="text-5xl font-bold mb-6 text-slate-900">
             Turn vague ideas into execution-ready work packages for AI systems
           </h1>
@@ -33,7 +39,7 @@ export function Landing() {
               <ArrowRight className="size-4" />
             </Button>
           </Link>
-        </div>
+        </motion.div>
       </section>
 
       {/* Three Stages Section */}

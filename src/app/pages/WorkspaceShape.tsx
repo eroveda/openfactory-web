@@ -5,6 +5,8 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { BoxEditDialog } from "../components/BoxEditDialog";
+import { toast } from "sonner";
 import { 
   Box as BoxIcon, 
   ArrowLeft,
