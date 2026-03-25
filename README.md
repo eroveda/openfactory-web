@@ -1,7 +1,7 @@
 
-  # Untitled
+  # openfactory
 
-  This is a code bundle for Untitled. The original project is available at https://www.figma.com/design/AsXP4zJU4d7wLdCgPaE3nK/Untitled.
+  This is a code bundle for openfactory. The original project is available at https://www.figma.com/design/AsXP4zJU4d7wLdCgPaE3nK/openfactory.
 
   ## Running the code
 

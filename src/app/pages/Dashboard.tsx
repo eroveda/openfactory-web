@@ -1,9 +1,32 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
-import { Box, Plus, Settings, LogOut, Users } from "lucide-react";
 import { Badge } from "../components/ui/badge";
+import { CommandPalette, useCommandPalette } from "../components/CommandPalette";
+import { motion } from "motion/react";
+import {
+  Box,
+  Plus,
+  Search,
+  Settings,
+  LogOut,
+  Lightbulb,
+  Zap,
+  Package,
+  Users,
+  Clock,
+  Sparkles,
+  FileText,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 
 interface Workspace {
   id: string;
@@ -16,6 +39,9 @@ interface Workspace {
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const { open: commandOpen, setOpen: setCommandOpen } = useCommandPalette();
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const [workspaces] = useState<Workspace[]>([
     {
       id: "1",
@@ -131,7 +157,17 @@ export function Dashboard() {
       <main className="ml-64 p-8">
         <div className="max-w-6xl">
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold mb-2">Your workspaces</h1>
+            <div className="flex items-center justify-between mb-2">
+              <h1 className="text-3xl font-semibold">Your workspaces</h1>
+              <button
+                onClick={() => setCommandOpen(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-white hover:bg-slate-50 text-sm text-slate-600"
+              >
+                <Search className="size-4" />
+                <span>Search</span>
+                <kbd className="ml-2 px-2 py-0.5 text-xs bg-slate-100 rounded border">⌘K</kbd>
+              </button>
+            </div>
             <p className="text-slate-600">Manage and collaborate on your work packages</p>
           </div>
 
@@ -213,6 +249,9 @@ export function Dashboard() {
           )}
         </div>
       </main>
+
+      {/* Command Palette */}
+      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </div>
   );
 }

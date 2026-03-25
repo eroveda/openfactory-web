@@ -1,22 +1,32 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "../components/ui/button";
-import { Textarea } from "../components/ui/textarea";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
-import { 
-  Box as BoxIcon, 
+import { Textarea } from "../components/ui/textarea";
+import { ExportDialog } from "../components/ExportDialog";
+import { toast } from "sonner";
+import { motion } from "motion/react";
+import {
+  Box as BoxIcon,
   ArrowLeft,
   Download,
   CheckCircle2,
-  AlertCircle,
   Package,
-  FileText,
+  FileJson,
+  Send,
+  Copy,
+  Share2,
+  Sparkles,
+  Users,
+  Clock,
   Lightbulb,
+  FileText,
+  Zap,
   Settings,
-  Zap
+  AlertCircle,
 } from "lucide-react";
-import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 
 export function WorkspaceBox() {
   const { id } = useParams();

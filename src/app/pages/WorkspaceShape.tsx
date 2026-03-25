@@ -130,6 +130,8 @@ export function WorkspaceShape() {
 
   const [selectedBox, setSelectedBox] = useState<WorkBox | null>(boxes[0]);
   const [reshapeDialogOpen, setReshapeDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [boxToEdit, setBoxToEdit] = useState<WorkBox | null>(null);
 
   const readinessSignals = [
     { label: "Core boxes created", status: "complete" },
@@ -283,7 +285,7 @@ export function WorkspaceShape() {
                     </div>
                     <h1 className="text-3xl font-semibold">{selectedBox.title}</h1>
                   </div>
-                  <Button variant="outline" size="sm">Edit</Button>
+                  <Button variant="outline" size="sm" onClick={() => { setEditDialogOpen(true); setBoxToEdit(selectedBox); }}>Edit</Button>
                 </div>
               </div>
 
@@ -476,6 +478,19 @@ export function WorkspaceShape() {
           </div>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <BoxEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        box={boxToEdit}
+        onSave={(updatedBox) => {
+          setBoxes((prevBoxes) =>
+            prevBoxes.map((box) => (box.id === updatedBox.id ? updatedBox : box))
+          );
+          setSelectedBox(updatedBox);
+        }}
+      />
     </div>
   );
 }
