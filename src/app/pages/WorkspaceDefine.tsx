@@ -23,6 +23,7 @@ import { InboxBell } from "../components/InboxBell";
 import { InfoTooltip } from "../components/InfoTooltip";
 import { DropZone } from "../components/DropZone";
 import { Skeleton } from "../components/ui/skeleton";
+import { StagePills } from "../components/StagePills";
 import { toast } from "sonner";
 
 // -----------------------------------------------------------------------
@@ -81,14 +82,23 @@ const MIN_TO_SHAPE = 3;
 // -----------------------------------------------------------------------
 // Helper: Generate Shape button (shared)
 // -----------------------------------------------------------------------
-function GenerateShapeButton({ onClick, isPending }: { onClick: () => void; isPending: boolean }) {
+function GenerateShapeButton({ onClick, isPending, isReshape }: { onClick: () => void; isPending: boolean; isReshape?: boolean }) {
   return (
-    <Button onClick={onClick} disabled={isPending} className="w-full gap-2" size="lg">
-      {isPending
-        ? <><Loader2 className="size-4 animate-spin" /> Generating…</>
-        : <>Generate Shape <ArrowRight className="size-4" /></>
-      }
-    </Button>
+    <div className="space-y-2">
+      {isReshape && (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+          Re-running will overwrite existing boxes and plan.
+        </p>
+      )}
+      <Button onClick={onClick} disabled={isPending} className="w-full gap-2" size="lg">
+        {isPending
+          ? <><Loader2 className="size-4 animate-spin" /> Generating…</>
+          : isReshape
+          ? <>Re-generate Shape <ArrowRight className="size-4" /></>
+          : <>Generate Shape <ArrowRight className="size-4" /></>
+        }
+      </Button>
+    </div>
   );
 }
 
@@ -122,6 +132,7 @@ export function WorkspaceDefine() {
   const currentQ = answeredCount < QUESTIONS.length ? QUESTIONS[answeredCount] : null;
   const isComplete = answeredCount >= QUESTIONS.length;
   const canShape = answeredCount >= MIN_TO_SHAPE;
+  const isReshape = workpack?.stage === "SHAPE" || workpack?.stage === "BOX";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -192,17 +203,7 @@ export function WorkspaceDefine() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className="gap-1">
-                <div className="size-2 rounded-full bg-amber-500" /> Raw / Define
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <div className="size-2 rounded-full bg-gray-300" /> Shape
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <div className="size-2 rounded-full bg-gray-300" /> Box
-              </Badge>
-            </div>
+            <StagePills workpackId={id!} current="define" />
 
             <div className="flex items-center gap-3">
               <InboxBell />
@@ -495,7 +496,7 @@ export function WorkspaceDefine() {
 
           <div className="pt-4 border-t">
             {canShape ? (
-              <GenerateShapeButton onClick={handleShape} isPending={shape.isPending} />
+              <GenerateShapeButton onClick={handleShape} isPending={shape.isPending} isReshape={isReshape} />
             ) : (
               <div className="text-center text-sm text-slate-400 py-2">
                 Answer {MIN_TO_SHAPE - answeredCount} more question{MIN_TO_SHAPE - answeredCount > 1 ? "s" : ""} to unlock

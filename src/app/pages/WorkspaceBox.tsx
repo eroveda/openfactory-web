@@ -29,6 +29,7 @@ import type { SimulationResult, BoxSimulation } from "../../lib/api";
 import { InboxBell } from "../components/InboxBell";
 import { InfoTooltip } from "../components/InfoTooltip";
 import { Skeleton } from "../components/ui/skeleton";
+import { StagePills } from "../components/StagePills";
 
 // -----------------------------------------------------------------------
 // Execution Preview visual
@@ -283,17 +284,7 @@ export function WorkspaceBox() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className="gap-1">
-                <CheckCircle2 className="size-3 text-green-600" /> Raw / Define
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <CheckCircle2 className="size-3 text-green-600" /> Shape
-              </Badge>
-              <Badge variant="outline" className="gap-1 bg-blue-100">
-                <div className="size-2 rounded-full bg-blue-600" /> Box
-              </Badge>
-            </div>
+            <StagePills workpackId={id!} current="box" />
 
             <InboxBell />
           </div>

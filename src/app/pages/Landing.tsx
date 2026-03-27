@@ -31,7 +31,7 @@ export function Landing() {
             Turn vague ideas into execution-ready work packages for AI systems
           </h1>
           <p className="text-xl text-slate-600 mb-8">
-            openFactory is the design layer that transforms unclear intentions into structured, executable work that AI agents can actually run with.
+            openFactory structures your ideas into execution-ready work packages — with clear boxes, dependencies, and handoff notes that AI agents and teams can act on.
           </p>
           <Link to="/login">
             <Button size="lg" className="gap-2">
@@ -58,12 +58,12 @@ export function Landing() {
             </div>
             <h3 className="text-xl font-semibold mb-2">Raw / Define</h3>
             <p className="text-slate-600 mb-4">
-              Pin your ideas to the board — anything goes. The Live Brief analyzes what you add and tells you when there's enough to move forward.
+              Answer five guided questions to clarify your idea. Each answer becomes a structured context signal the AI uses to shape the work.
             </p>
             <ul className="text-sm text-slate-600 space-y-2">
-              <li>• Collaborative pin board</li>
-              <li>• Real-time brief synthesis</li>
-              <li>• Readiness signals</li>
+              <li>• Guided conversational wizard</li>
+              <li>• Typed context signals</li>
+              <li>• Readiness check before shaping</li>
             </ul>
           </div>
 
@@ -75,12 +75,12 @@ export function Landing() {
             </div>
             <h3 className="text-xl font-semibold mb-2">Shape</h3>
             <p className="text-slate-600 mb-4">
-              Break your work into execution boxes. Define inputs, outputs, dependencies, and sequence. Get feedback from collaborators.
+              The AI generates structured work boxes with inputs, outputs, instructions and dependencies. Review, edit, and validate each one.
             </p>
             <ul className="text-sm text-slate-600 space-y-2">
-              <li>• Work breakdown structure</li>
-              <li>• Dependency mapping</li>
-              <li>• Collaborative review</li>
+              <li>• AI-generated work breakdown</li>
+              <li>• Dependency and sequence map</li>
+              <li>• Brief quality signals</li>
             </ul>
           </div>
 
@@ -92,12 +92,12 @@ export function Landing() {
             </div>
             <h3 className="text-xl font-semibold mb-2">Box</h3>
             <p className="text-slate-600 mb-4">
-              Your work is packaged and ready for handoff. Export it to any AI system or share it with your team for approval.
+              Simulate the handoff to catch gaps before exporting. Then package brief, boxes and execution plan into a portable ZIP.
             </p>
             <ul className="text-sm text-slate-600 space-y-2">
-              <li>• Complete package assembly</li>
+              <li>• Preflight simulation</li>
               <li>• Approval workflow</li>
-              <li>• Portable export</li>
+              <li>• Portable ZIP export</li>
             </ul>
           </div>
         </div>

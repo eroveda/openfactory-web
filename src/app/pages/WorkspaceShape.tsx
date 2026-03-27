@@ -20,6 +20,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { useWorkpack, useBoxes, usePlan, useBrief, useShape, useUpdateBox } from "../../hooks/useWorkpacks";
 import { Skeleton } from "../components/ui/skeleton";
+import { StagePills } from "../components/StagePills";
 import { InboxBell } from "../components/InboxBell";
 import { InfoTooltip } from "../components/InfoTooltip";
 import type { Box } from "../../lib/api";
@@ -76,17 +77,7 @@ export function WorkspaceShape() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className="gap-1">
-                <CheckCircle2 className="size-3 text-green-600" /> Raw / Define
-              </Badge>
-              <Badge variant="outline" className="gap-1 bg-slate-100">
-                <div className="size-2 rounded-full bg-slate-600" /> Shape
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <div className="size-2 rounded-full bg-gray-300" /> Box
-              </Badge>
-            </div>
+            <StagePills workpackId={id!} current="shape" />
 
             <div className="flex items-center gap-3">
               <InboxBell />
