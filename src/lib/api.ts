@@ -26,6 +26,9 @@ async function request<T>(
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new Error(err.message ?? `HTTP ${res.status}`);
   }
+  if (res.status === 204 || res.headers.get("content-length") === "0") {
+    return undefined as T;
+  }
   return res.json();
 }
 
