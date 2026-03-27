@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { workpacksApi, briefApi, boxesApi, planApi, handoffApi, pinsApi, userApi, membersApi, inboxApi, attachmentsApi } from "../lib/api";
+import { workpacksApi, briefApi, boxesApi, planApi, handoffApi, pinsApi, userApi, membersApi, inboxApi, attachmentsApi, simulationApi } from "../lib/api";
 import type { MemberRole } from "../lib/api";
 
 // -----------------------------------------------------------------------
@@ -232,6 +232,16 @@ export function useDeleteAttachment(workpackId: string) {
   return useMutation({
     mutationFn: (id: string) => attachmentsApi.delete(workpackId, id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["attachments", workpackId] }),
+  });
+}
+
+// -----------------------------------------------------------------------
+// Simulation
+// -----------------------------------------------------------------------
+
+export function useSimulate(workpackId: string) {
+  return useMutation({
+    mutationFn: () => simulationApi.run(workpackId),
   });
 }
 

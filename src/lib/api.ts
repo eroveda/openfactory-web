@@ -283,6 +283,42 @@ export const membersApi = {
 };
 
 // -----------------------------------------------------------------------
+// Simulation
+// -----------------------------------------------------------------------
+
+export interface SimulationCompleteness {
+  briefPresent: boolean;
+  boxesPresent: boolean;
+  planPresent: boolean;
+  handoffPresent: boolean;
+}
+
+export interface BoxSimulation {
+  boxId: string;
+  title: string;
+  order: number;
+  parallel: boolean;
+  checkpoint: boolean;
+  readinessScore: number;  // 0-100
+  ready: boolean;
+  gaps: string[];
+}
+
+export type SimulationStatus = "READY" | "NEEDS_FIXES" | "BLOCKED";
+
+export interface SimulationResult {
+  status: SimulationStatus;
+  completeness: SimulationCompleteness;
+  sequence: BoxSimulation[];
+  planFindings: string[];
+}
+
+export const simulationApi = {
+  run: (workpackId: string) =>
+    request<SimulationResult>("POST", `/api/workpacks/${workpackId}/simulate`),
+};
+
+// -----------------------------------------------------------------------
 // Download (authenticated blob)
 // -----------------------------------------------------------------------
 
