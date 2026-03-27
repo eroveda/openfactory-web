@@ -307,8 +307,26 @@ export function WorkspaceDefine() {
                   <p className="text-sm">Start adding pins to see the live brief</p>
                 </div>
               ) : (
-                <div className="text-center py-12 text-slate-500">
-                  <p className="text-sm">Brief not yet generated. Create the workpack to run the pipeline.</p>
+                <div className="text-center py-8 text-slate-500">
+                  <p className="text-sm mb-6">Ready to generate the shape from your {pins.length} pins.</p>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await shape.mutateAsync();
+                        navigate(`/workspace/${id}/shape`);
+                      } catch (e: any) {
+                        toast.error(e.message ?? "Failed to generate shape");
+                      }
+                    }}
+                    disabled={shape.isPending}
+                    className="w-full gap-2"
+                    size="lg"
+                  >
+                    {shape.isPending
+                      ? <><Loader2 className="size-4 animate-spin" /> Generating…</>
+                      : <>Generate Shape <ArrowRight className="size-4" /></>
+                    }
+                  </Button>
                 </div>
               )}
             </div>
