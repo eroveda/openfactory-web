@@ -188,6 +188,38 @@ export const handoffApi = {
 };
 
 // -----------------------------------------------------------------------
+// Attachments
+// -----------------------------------------------------------------------
+
+export type FileType = "text" | "image" | "pdf" | "audio";
+
+export interface Attachment {
+  id: string;
+  workpackId: string;
+  userId: string;
+  fileName: string;
+  fileType: FileType;
+  storageUrl: string;
+  contentText?: string;
+  createdAt: string;
+}
+
+export const attachmentsApi = {
+  list: (workpackId: string) =>
+    request<Attachment[]>("GET", `/api/workpacks/${workpackId}/attachments`),
+
+  create: (workpackId: string, data: {
+    fileName: string;
+    fileType: FileType;
+    storageUrl: string;
+    contentText?: string;
+  }) => request<Attachment>("POST", `/api/workpacks/${workpackId}/attachments`, data),
+
+  delete: (workpackId: string, id: string) =>
+    request<void>("DELETE", `/api/workpacks/${workpackId}/attachments/${id}`),
+};
+
+// -----------------------------------------------------------------------
 // Inbox
 // -----------------------------------------------------------------------
 

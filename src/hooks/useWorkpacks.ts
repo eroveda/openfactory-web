@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { workpacksApi, briefApi, boxesApi, planApi, handoffApi, pinsApi, userApi, membersApi, inboxApi } from "../lib/api";
+import { workpacksApi, briefApi, boxesApi, planApi, handoffApi, pinsApi, userApi, membersApi, inboxApi, attachmentsApi } from "../lib/api";
 import type { MemberRole } from "../lib/api";
 
 // -----------------------------------------------------------------------
@@ -203,6 +203,35 @@ export function useRemoveMember(workpackId: string) {
   return useMutation({
     mutationFn: (userId: string) => membersApi.remove(workpackId, userId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["members", workpackId] }),
+  });
+}
+
+// -----------------------------------------------------------------------
+// Attachments
+// -----------------------------------------------------------------------
+
+export function useAttachments(workpackId: string) {
+  return useQuery({
+    queryKey: ["attachments", workpackId],
+    queryFn: () => attachmentsApi.list(workpackId),
+    enabled: !!workpackId,
+  });
+}
+
+export function useCreateAttachment(workpackId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Parameters<typeof attachmentsApi.create>[1]) =>
+      attachmentsApi.create(workpackId, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["attachments", workpackId] }),
+  });
+}
+
+export function useDeleteAttachment(workpackId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => attachmentsApi.delete(workpackId, id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["attachments", workpackId] }),
   });
 }
 

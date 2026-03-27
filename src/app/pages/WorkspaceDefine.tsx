@@ -18,9 +18,10 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
-import { useWorkpack, usePins, useCreatePin, useDeletePin, useMembers, useInviteMember, useShape } from "../../hooks/useWorkpacks";
+import { useWorkpack, usePins, useCreatePin, useDeletePin, useMembers, useInviteMember, useShape, useAttachments, useCreateAttachment, useDeleteAttachment } from "../../hooks/useWorkpacks";
 import { InboxBell } from "../components/InboxBell";
 import { InfoTooltip } from "../components/InfoTooltip";
+import { DropZone } from "../components/DropZone";
 import { toast } from "sonner";
 
 // -----------------------------------------------------------------------
@@ -104,6 +105,9 @@ export function WorkspaceDefine() {
   const { data: members = [] } = useMembers(id!);
   const inviteMember = useInviteMember(id!);
   const shape = useShape(id!);
+  const { data: attachments = [] } = useAttachments(id!);
+  const createAttachment = useCreateAttachment(id!);
+  const deleteAttachment = useDeleteAttachment(id!);
 
   const [answer, setAnswer] = useState("");
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -453,6 +457,24 @@ export function WorkspaceDefine() {
                 + {pins.length - QUESTIONS.length} extra context signal{pins.length - QUESTIONS.length > 1 ? "s" : ""}
               </div>
             )}
+          </div>
+
+          {/* Attachments */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-sm font-medium text-slate-700">Files</h3>
+              <InfoTooltip
+                title="Attached files"
+                body="Text files (.txt, .md, .csv) are fed directly into the pipeline as context. Images are stored but not yet processed by the AI."
+                footer="Images will be processed in a future release."
+              />
+            </div>
+            <DropZone
+              attachments={attachments}
+              workpackId={id!}
+              onUpload={(data) => createAttachment.mutateAsync(data)}
+              onDelete={(attachmentId) => deleteAttachment.mutate(attachmentId)}
+            />
           </div>
 
           <div className="pt-4 border-t">
