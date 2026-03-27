@@ -22,6 +22,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { useWorkpack, usePins, useCreatePin, useDeletePin, useBrief, useMembers, useInviteMember } from "../../hooks/useWorkpacks";
+import { InboxBell } from "../components/InboxBell";
 import { toast } from "sonner";
 
 const COLORS = ["yellow", "green", "blue", "purple"] as const;
@@ -125,6 +126,7 @@ export function WorkspaceDefine() {
               </div>
 
               <div className="flex items-center gap-3">
+                <InboxBell />
                 <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">

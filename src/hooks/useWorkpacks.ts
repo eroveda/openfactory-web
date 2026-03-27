@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { workpacksApi, briefApi, boxesApi, planApi, handoffApi, pinsApi, userApi, membersApi } from "../lib/api";
+import { workpacksApi, briefApi, boxesApi, planApi, handoffApi, pinsApi, userApi, membersApi, inboxApi } from "../lib/api";
 import type { MemberRole } from "../lib/api";
 
 // -----------------------------------------------------------------------
@@ -203,6 +203,44 @@ export function useRemoveMember(workpackId: string) {
   return useMutation({
     mutationFn: (userId: string) => membersApi.remove(workpackId, userId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["members", workpackId] }),
+  });
+}
+
+// -----------------------------------------------------------------------
+// Inbox
+// -----------------------------------------------------------------------
+
+export function useInbox(unreadOnly = false) {
+  return useQuery({
+    queryKey: ["inbox", unreadOnly],
+    queryFn: () => inboxApi.list(unreadOnly),
+    refetchInterval: 30_000, // poll every 30s
+  });
+}
+
+export function useMarkRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => inboxApi.markRead(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["inbox"] }),
+  });
+}
+
+export function useMarkAllRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: inboxApi.markAllRead,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["inbox"] }),
+  });
+}
+
+// -----------------------------------------------------------------------
+// Handoff approval request
+// -----------------------------------------------------------------------
+
+export function useRequestApproval(workpackId: string) {
+  return useMutation({
+    mutationFn: () => handoffApi.requestApproval(workpackId),
   });
 }
 

@@ -17,8 +17,9 @@ import {
   Lightbulb,
   Loader2,
 } from "lucide-react";
-import { useWorkpack, useBoxes, useBrief, useHandoff, useUpdateHandoff } from "../../hooks/useWorkpacks";
+import { useWorkpack, useBoxes, useBrief, useHandoff, useUpdateHandoff, useRequestApproval } from "../../hooks/useWorkpacks";
 import { downloadWorkpackZip } from "../../lib/api";
+import { InboxBell } from "../components/InboxBell";
 
 export function WorkspaceBox() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,7 @@ export function WorkspaceBox() {
   const { data: brief } = useBrief(id!);
   const { data: handoff } = useHandoff(id!);
   const updateHandoff = useUpdateHandoff(id!);
+  const requestApproval = useRequestApproval(id!);
 
   const [handoffNotes, setHandoffNotes] = useState("");
   const [notesDirty, setNotesDirty] = useState(false);
@@ -102,7 +104,9 @@ export function WorkspaceBox() {
               </Badge>
             </div>
 
-            <div className="w-24" />
+            <div className="flex items-center gap-2">
+              <InboxBell />
+            </div>
           </div>
         </div>
       </header>
@@ -231,6 +235,22 @@ export function WorkspaceBox() {
                   : <Download className="size-4" />
                 }
                 Export package
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 gap-2"
+                disabled={requestApproval.isPending}
+                onClick={async () => {
+                  try {
+                    await requestApproval.mutateAsync();
+                    toast.success("Approval requested — collaborators have been notified");
+                  } catch (e: any) {
+                    toast.error(e.message ?? "Failed to request approval");
+                  }
+                }}
+              >
+                {requestApproval.isPending && <Loader2 className="size-4 animate-spin" />}
+                Request approval
               </Button>
             </div>
           </div>

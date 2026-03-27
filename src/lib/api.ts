@@ -182,6 +182,36 @@ export const handoffApi = {
 
   approve: (workpackId: string) =>
     request<Handoff>("POST", `/api/workpacks/${workpackId}/handoff/approve`),
+
+  requestApproval: (workpackId: string) =>
+    request<Handoff>("POST", `/api/workpacks/${workpackId}/handoff/request-approval`),
+};
+
+// -----------------------------------------------------------------------
+// Inbox
+// -----------------------------------------------------------------------
+
+export type InboxType = "WORKPACK_SHARED" | "APPROVAL_REQUESTED" | "APPROVED" | "CHANGES_REQUESTED" | "MENTION";
+
+export interface InboxItem {
+  id: string;
+  userId: string;
+  workpackId?: string;
+  type: InboxType;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export const inboxApi = {
+  list: (unreadOnly = false) =>
+    request<InboxItem[]>("GET", `/api/inbox${unreadOnly ? "?unread=true" : ""}`),
+
+  markRead: (id: string) =>
+    request<InboxItem>("POST", `/api/inbox/${id}/read`),
+
+  markAllRead: () =>
+    request<{ marked: number }>("POST", `/api/inbox/read-all`),
 };
 
 // -----------------------------------------------------------------------

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { useWorkpack, useBoxes, usePlan, useShape, useUpdateBox } from "../../hooks/useWorkpacks";
+import { InboxBell } from "../components/InboxBell";
 import type { Box } from "../../lib/api";
 import { toast } from "sonner";
 
@@ -84,6 +85,7 @@ export function WorkspaceShape() {
             </div>
 
             <div className="flex items-center gap-3">
+              <InboxBell />
               <Button variant="outline" size="sm" className="gap-2">
                 <Users className="size-4" /> Share
               </Button>

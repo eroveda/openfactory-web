@@ -28,6 +28,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import { useAuthStore } from "../../store/authStore";
 import { useWorkpacks, useIngest, useDeleteWorkpack } from "../../hooks/useWorkpacks";
+import { InboxBell } from "../components/InboxBell";
 import type { Workpack } from "../../lib/api";
 import { toast } from "sonner";
 
@@ -226,6 +227,7 @@ export function Dashboard() {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <h1 className="text-3xl font-semibold">Your workspaces</h1>
+              <InboxBell />
               <button
                 onClick={() => setCommandOpen(true)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-white hover:bg-slate-50 text-sm text-slate-600"
