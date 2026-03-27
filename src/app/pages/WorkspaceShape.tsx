@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { useWorkpack, useBoxes, usePlan, useBrief, useShape, useUpdateBox } from "../../hooks/useWorkpacks";
+import { Skeleton } from "../components/ui/skeleton";
 import { InboxBell } from "../components/InboxBell";
 import { InfoTooltip } from "../components/InfoTooltip";
 import type { Box } from "../../lib/api";
@@ -141,8 +142,16 @@ export function WorkspaceShape() {
             </div>
 
             {loadingBoxes ? (
-              <div className="flex items-center gap-2 text-slate-500 text-sm py-4">
-                <Loader2 className="size-4 animate-spin" /> Loading boxes…
+              <div className="space-y-2">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="p-3 rounded-lg border">
+                    <div className="flex items-center justify-between mb-2">
+                      <Skeleton className="h-3 w-8" />
+                      <Skeleton className="h-4 w-12" />
+                    </div>
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="space-y-2 mb-4">
@@ -240,11 +249,27 @@ export function WorkspaceShape() {
               </div>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-slate-500">
-              {isProcessing
-                ? <div className="text-center"><Loader2 className="size-12 mx-auto mb-3 animate-spin opacity-30" /><p>Generating boxes…</p></div>
-                : <p>Select a box to see details</p>
-              }
+            <div className="h-full flex items-center justify-center">
+              {isProcessing ? (
+                <div className="text-center text-slate-500">
+                  <Loader2 className="size-12 mx-auto mb-3 animate-spin opacity-30" />
+                  <p className="font-medium">Generating boxes…</p>
+                  <p className="text-sm mt-1">This takes about 30–60 seconds</p>
+                </div>
+              ) : workpack?.processingStatus === "FAILED" ? (
+                <div className="text-center max-w-sm">
+                  <AlertCircle className="size-10 mx-auto mb-3 text-red-400" />
+                  <p className="font-medium text-slate-800 mb-1">Pipeline failed</p>
+                  <p className="text-sm text-slate-500 mb-4">
+                    {workpack.failureReason ?? "Something went wrong generating the boxes."}
+                  </p>
+                  <Link to={`/workspace/${id}/define`}>
+                    <Button variant="outline" size="sm">Back to Define</Button>
+                  </Link>
+                </div>
+              ) : (
+                <p className="text-slate-400 text-sm">Select a box to see details</p>
+              )}
             </div>
           )}
         </div>

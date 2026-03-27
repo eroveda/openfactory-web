@@ -22,6 +22,7 @@ import { useWorkpack, usePins, useCreatePin, useDeletePin, useMembers, useInvite
 import { InboxBell } from "../components/InboxBell";
 import { InfoTooltip } from "../components/InfoTooltip";
 import { DropZone } from "../components/DropZone";
+import { Skeleton } from "../components/ui/skeleton";
 import { toast } from "sonner";
 
 // -----------------------------------------------------------------------
@@ -99,7 +100,7 @@ export function WorkspaceDefine() {
   const navigate = useNavigate();
 
   const { data: workpack } = useWorkpack(id!);
-  const { data: pins = [] } = usePins(id!);
+  const { data: pins = [], isLoading: loadingPins } = usePins(id!);
   const createPin = useCreatePin(id!);
   const deletePin = useDeletePin(id!);
   const { data: members = [] } = useMembers(id!);
@@ -283,6 +284,21 @@ export function WorkspaceDefine() {
 
               {/* Answered Q&A thread */}
               <div className="space-y-4 mb-6">
+                {loadingPins && (
+                  <div className="space-y-4">
+                    {[1, 2].map(i => (
+                      <div key={i} className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="size-6 rounded-full" />
+                          <Skeleton className="h-4 w-56" />
+                        </div>
+                        <div className="ml-9">
+                          <Skeleton className="h-12 w-full rounded-lg" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <AnimatePresence>
                   {pins.slice(0, QUESTIONS.length).map((pin, i) => {
                     const q = QUESTIONS[i];
@@ -318,7 +334,7 @@ export function WorkspaceDefine() {
               </div>
 
               {/* Current question input */}
-              {!isComplete && currentQ && !shape.isPending && (
+              {!loadingPins && !isComplete && currentQ && !shape.isPending && (
                 <motion.div
                   key={currentQ.step}
                   initial={{ opacity: 0, y: 10 }}

@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+import { Skeleton } from "../components/ui/skeleton";
 import { useAuthStore } from "../../store/authStore";
 import { useWorkpacks, useIngest, useDeleteWorkpack } from "../../hooks/useWorkpacks";
 import { InboxBell } from "../components/InboxBell";
@@ -263,9 +264,16 @@ export function Dashboard() {
           )}
 
           {isLoading && (
-            <div className="flex items-center gap-2 text-slate-500">
-              <Loader2 className="size-4 animate-spin" />
-              Loading workspaces…
+            <div className="grid gap-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white border rounded-lg p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <Skeleton className="h-6 w-64" />
+                    <Skeleton className="h-5 w-20" />
+                  </div>
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              ))}
             </div>
           )}
 

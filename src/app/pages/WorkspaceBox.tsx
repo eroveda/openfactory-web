@@ -28,6 +28,7 @@ import { downloadWorkpackZip } from "../../lib/api";
 import type { SimulationResult, BoxSimulation } from "../../lib/api";
 import { InboxBell } from "../components/InboxBell";
 import { InfoTooltip } from "../components/InfoTooltip";
+import { Skeleton } from "../components/ui/skeleton";
 
 // -----------------------------------------------------------------------
 // Execution Preview visual
@@ -204,9 +205,9 @@ export function WorkspaceBox() {
   const { id } = useParams<{ id: string }>();
 
   const { data: workpack } = useWorkpack(id!);
-  const { data: boxes = [] } = useBoxes(id!);
-  const { data: brief } = useBrief(id!);
-  const { data: handoff } = useHandoff(id!);
+  const { data: boxes = [], isLoading: loadingBoxes } = useBoxes(id!);
+  const { data: brief, isLoading: loadingBrief } = useBrief(id!);
+  const { data: handoff, isLoading: loadingHandoff } = useHandoff(id!);
   const updateHandoff = useUpdateHandoff(id!);
   const requestApproval = useRequestApproval(id!);
   const simulate = useSimulate(id!);
@@ -253,6 +254,7 @@ export function WorkspaceBox() {
     }
   };
 
+  const isLoading = loadingBoxes || loadingBrief || loadingHandoff;
   const canExport = !simulationResult || simulationResult.status !== "BLOCKED";
 
   const packageSignals = [
@@ -316,7 +318,25 @@ export function WorkspaceBox() {
               </div>
             </div>
 
+            {/* Loading skeleton */}
+            {isLoading ? (
+              <div className="bg-white border rounded-lg p-6 mb-6 space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b">
+                  <Skeleton className="h-7 w-48" />
+                  <Skeleton className="h-5 w-24" />
+                </div>
+                <div className="grid md:grid-cols-3 gap-3">
+                  {[1,2,3].map(i => <Skeleton key={i} className="h-20 rounded-lg" />)}
+                </div>
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              </div>
+            ) : null}
+
             {/* Package Card */}
+            {!isLoading && (
             <div className="bg-white border rounded-lg mb-6">
               <div className="border-b p-6">
                 <div className="flex items-center justify-between">
@@ -379,6 +399,7 @@ export function WorkspaceBox() {
                 )}
               </div>
             </div>
+            )}
 
             {/* Simulate button */}
             <div className="mb-4">
