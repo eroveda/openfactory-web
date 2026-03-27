@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
@@ -6,6 +6,7 @@ import { Profile } from "./pages/Profile";
 import { WorkspaceDefine } from "./pages/WorkspaceDefine";
 import { WorkspaceShape } from "./pages/WorkspaceShape";
 import { WorkspaceBox } from "./pages/WorkspaceBox";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
@@ -18,22 +19,26 @@ export const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    Component: Dashboard,
+    element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
   },
   {
     path: "/profile",
-    Component: Profile,
+    element: <ProtectedRoute><Profile /></ProtectedRoute>,
   },
   {
     path: "/workspace/:id/define",
-    Component: WorkspaceDefine,
+    element: <ProtectedRoute><WorkspaceDefine /></ProtectedRoute>,
   },
   {
     path: "/workspace/:id/shape",
-    Component: WorkspaceShape,
+    element: <ProtectedRoute><WorkspaceShape /></ProtectedRoute>,
   },
   {
     path: "/workspace/:id/box",
-    Component: WorkspaceBox,
+    element: <ProtectedRoute><WorkspaceBox /></ProtectedRoute>,
+  },
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
   },
 ]);
