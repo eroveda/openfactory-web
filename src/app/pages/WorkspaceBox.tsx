@@ -22,8 +22,11 @@ import {
   ChevronRight,
   GitBranch,
   Flag,
+  Users,
 } from "lucide-react";
-import { useWorkpack, useBoxes, useBrief, useHandoff, useUpdateHandoff, useRequestApproval, useSimulate } from "../../hooks/useWorkpacks";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { useWorkpack, useBoxes, useBrief, useHandoff, useUpdateHandoff, useRequestApproval, useSimulate, useMembers, useInviteMember } from "../../hooks/useWorkpacks";
 import { downloadWorkpackZip } from "../../lib/api";
 import type { SimulationResult, BoxSimulation } from "../../lib/api";
 import { InboxBell } from "../components/InboxBell";
@@ -212,11 +215,26 @@ export function WorkspaceBox() {
   const updateHandoff = useUpdateHandoff(id!);
   const requestApproval = useRequestApproval(id!);
   const simulate = useSimulate(id!);
+  const { data: members = [] } = useMembers(id!);
+  const inviteMember = useInviteMember(id!);
 
   const [handoffNotes, setHandoffNotes] = useState("");
   const [notesDirty, setNotesDirty] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) return;
+    try {
+      await inviteMember.mutateAsync({ email: inviteEmail.trim() });
+      setInviteEmail("");
+      toast.success(`Invitation sent to ${inviteEmail.trim()}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to invite");
+    }
+  };
 
   useEffect(() => {
     if (handoff?.handoffNotes && !notesDirty) {
@@ -286,7 +304,49 @@ export function WorkspaceBox() {
 
             <StagePills workpackId={id!} current="box" />
 
-            <InboxBell />
+            <div className="flex items-center gap-3">
+              <InboxBell />
+              <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Users className="size-4" /> Share
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Share this workspace</DialogTitle></DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Invite by email</label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="colleague@example.com"
+                          value={inviteEmail}
+                          onChange={e => setInviteEmail(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter") handleInvite(); }}
+                        />
+                        <Button onClick={handleInvite} disabled={inviteMember.isPending}>
+                          {inviteMember.isPending && <Loader2 className="size-4 mr-1 animate-spin" />}
+                          Invite
+                        </Button>
+                      </div>
+                    </div>
+                    {members.length > 0 && (
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Members</label>
+                        <div className="space-y-2">
+                          {members.map(m => (
+                            <div key={m.userId} className="flex items-center justify-between text-sm">
+                              <span>{m.user?.name ?? m.user?.email ?? m.userId}</span>
+                              <span className="text-slate-500 text-xs">{m.role}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
       </header>

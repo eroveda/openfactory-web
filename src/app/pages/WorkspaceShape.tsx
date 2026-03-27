@@ -18,7 +18,8 @@ import {
   Pencil,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
-import { useWorkpack, useBoxes, usePlan, useBrief, useShape, useUpdateBox } from "../../hooks/useWorkpacks";
+import { Input } from "../components/ui/input";
+import { useWorkpack, useBoxes, usePlan, useBrief, useShape, useUpdateBox, useMembers, useInviteMember } from "../../hooks/useWorkpacks";
 import { Skeleton } from "../components/ui/skeleton";
 import { StagePills } from "../components/StagePills";
 import { InboxBell } from "../components/InboxBell";
@@ -37,9 +38,25 @@ export function WorkspaceShape() {
   const shape = useShape(id!);
   const updateBox = useUpdateBox(id!);
 
+  const { data: members = [] } = useMembers(id!);
+  const inviteMember = useInviteMember(id!);
+
   const [selectedBox, setSelectedBox] = useState<Box | null>(null);
   const [reshapeDialogOpen, setReshapeDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) return;
+    try {
+      await inviteMember.mutateAsync({ email: inviteEmail.trim() });
+      setInviteEmail("");
+      toast.success(`Invitation sent to ${inviteEmail.trim()}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to invite");
+    }
+  };
 
   const isProcessing = workpack?.processingStatus === "PROCESSING" || workpack?.processingStatus === "PENDING";
   const activeBox = selectedBox ?? boxes[0] ?? null;
@@ -81,9 +98,46 @@ export function WorkspaceShape() {
 
             <div className="flex items-center gap-3">
               <InboxBell />
-              <Button variant="outline" size="sm" className="gap-2">
-                <Users className="size-4" /> Share
-              </Button>
+              <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Users className="size-4" /> Share
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Share this workspace</DialogTitle></DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Invite by email</label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="colleague@example.com"
+                          value={inviteEmail}
+                          onChange={e => setInviteEmail(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter") handleInvite(); }}
+                        />
+                        <Button onClick={handleInvite} disabled={inviteMember.isPending}>
+                          {inviteMember.isPending && <Loader2 className="size-4 mr-1 animate-spin" />}
+                          Invite
+                        </Button>
+                      </div>
+                    </div>
+                    {members.length > 0 && (
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Members</label>
+                        <div className="space-y-2">
+                          {members.map(m => (
+                            <div key={m.userId} className="flex items-center justify-between text-sm">
+                              <span>{m.user?.name ?? m.user?.email ?? m.userId}</span>
+                              <span className="text-slate-500 text-xs">{m.role}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>

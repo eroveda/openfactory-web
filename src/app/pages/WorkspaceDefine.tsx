@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  CheckCircle2,
   AlertCircle,
   Loader2,
   Send,
@@ -18,7 +19,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
-import { useWorkpack, usePins, useCreatePin, useDeletePin, useMembers, useInviteMember, useShape, useAttachments, useCreateAttachment, useDeleteAttachment } from "../../hooks/useWorkpacks";
+import { useWorkpack, usePins, useCreatePin, useDeletePin, useMembers, useInviteMember, useShape, useBrief, useAttachments, useCreateAttachment, useDeleteAttachment } from "../../hooks/useWorkpacks";
 import { InboxBell } from "../components/InboxBell";
 import { InfoTooltip } from "../components/InfoTooltip";
 import { DropZone } from "../components/DropZone";
@@ -115,6 +116,7 @@ export function WorkspaceDefine() {
   const deletePin = useDeletePin(id!);
   const { data: members = [] } = useMembers(id!);
   const inviteMember = useInviteMember(id!);
+  const { data: brief } = useBrief(id!);
   const shape = useShape(id!);
   const { data: attachments = [] } = useAttachments(id!);
   const createAttachment = useCreateAttachment(id!);
@@ -472,6 +474,31 @@ export function WorkspaceDefine() {
             {pins.length > QUESTIONS.length && (
               <div className="text-xs text-slate-400 mb-4">
                 + {pins.length - QUESTIONS.length} extra context signal{pins.length - QUESTIONS.length > 1 ? "s" : ""}
+              </div>
+            )}
+
+            {/* LLM signals from last pipeline run */}
+            {brief?.readinessSignals && (
+              <div className="pt-4 border-t">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">AI analysis</p>
+                <div className="space-y-2">
+                  {[
+                    { label: "Intent clear",       ok: brief.readinessSignals.intentClear },
+                    { label: "Actor defined",      ok: brief.readinessSignals.actorDefined },
+                    { label: "Scope defined",      ok: brief.readinessSignals.scopeDefined },
+                    { label: "Constraints",        ok: brief.readinessSignals.constraintsDefined },
+                    { label: "Success criteria",   ok: brief.readinessSignals.successCriteriaDefined },
+                  ].map((s, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      {s.ok
+                        ? <CheckCircle2 className="size-3.5 text-green-600 flex-shrink-0" />
+                        : <AlertCircle className="size-3.5 text-amber-400 flex-shrink-0" />
+                      }
+                      <span className={`text-xs ${s.ok ? "text-green-900" : "text-slate-500"}`}>{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-300 mt-2">From last shape run</p>
               </div>
             )}
           </div>
