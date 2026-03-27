@@ -18,7 +18,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
-import { useWorkpack, useBoxes, usePlan, useShape, useUpdateBox } from "../../hooks/useWorkpacks";
+import { useWorkpack, useBoxes, usePlan, useBrief, useShape, useUpdateBox } from "../../hooks/useWorkpacks";
 import { InboxBell } from "../components/InboxBell";
 import { InfoTooltip } from "../components/InfoTooltip";
 import type { Box } from "../../lib/api";
@@ -31,6 +31,7 @@ export function WorkspaceShape() {
   const { data: workpack } = useWorkpack(id!);
   const { data: boxes = [], isLoading: loadingBoxes } = useBoxes(id!);
   const { data: plan } = usePlan(id!);
+  const { data: brief } = useBrief(id!);
   const shape = useShape(id!);
   const updateBox = useUpdateBox(id!);
 
@@ -52,7 +53,8 @@ export function WorkspaceShape() {
   };
 
   const readyCount = boxes.filter(b => b.status === "READY").length;
-  const isReady = boxes.length > 0 && !isProcessing;
+  const briefIncomplete = brief?.status === "INCOMPLETE";
+  const isReady = boxes.length > 0 && !isProcessing && !briefIncomplete;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -259,18 +261,48 @@ export function WorkspaceShape() {
               />
             </div>
 
+            {/* Brief quality signals from LLM */}
+            {brief?.readinessSignals && (
+              <div className="mb-5">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Brief quality</p>
+                <div className="space-y-2">
+                  {[
+                    { label: "Intent clear",        ok: brief.readinessSignals.intentClear },
+                    { label: "Actor defined",        ok: brief.readinessSignals.actorDefined },
+                    { label: "Scope defined",        ok: brief.readinessSignals.scopeDefined },
+                    { label: "Constraints defined",  ok: brief.readinessSignals.constraintsDefined },
+                    { label: "Success criteria",     ok: brief.readinessSignals.successCriteriaDefined },
+                  ].map((s, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      {s.ok
+                        ? <CheckCircle2 className="size-4 text-green-600 flex-shrink-0" />
+                        : <AlertCircle className="size-4 text-amber-400 flex-shrink-0" />
+                      }
+                      <span className={`text-sm ${s.ok ? "text-green-900" : "text-slate-500"}`}>{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+                {briefIncomplete && (
+                  <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                    Brief is incomplete — go back to Define and add more context before packaging.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Shape readiness */}
             <div className="space-y-3 mb-6">
               {[
-                { label: "Boxes generated", status: boxes.length > 0 ? "complete" : "incomplete" },
-                { label: "All boxes ready", status: readyCount === boxes.length && boxes.length > 0 ? "complete" : "incomplete" },
-                { label: "Plan available",  status: plan ? "complete" : "incomplete" },
+                { label: "Boxes generated", ok: boxes.length > 0 },
+                { label: "All boxes ready", ok: readyCount === boxes.length && boxes.length > 0 },
+                { label: "Plan available",  ok: !!plan },
               ].map((signal, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  {signal.status === "complete"
+                  {signal.ok
                     ? <CheckCircle2 className="size-5 text-green-600 flex-shrink-0 mt-0.5" />
                     : <div className="size-5 rounded-full border-2 border-slate-300 flex-shrink-0 mt-0.5" />
                   }
-                  <p className={`text-sm font-medium ${signal.status === "complete" ? "text-green-900" : "text-slate-600"}`}>
+                  <p className={`text-sm font-medium ${signal.ok ? "text-green-900" : "text-slate-600"}`}>
                     {signal.label}
                   </p>
                 </div>

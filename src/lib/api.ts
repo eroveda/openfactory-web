@@ -50,6 +50,17 @@ export interface Workpack {
   owner?: { id: string; name: string; email: string; avatarUrl?: string };
 }
 
+export interface ReadinessSignals {
+  intentClear: boolean;
+  actorDefined: boolean;
+  actorInferred: boolean;
+  scopeDefined: boolean;
+  constraintsDefined: boolean;
+  successCriteriaDefined: boolean;
+}
+
+export type BriefStatus = "DRAFT" | "READY" | "INCOMPLETE";
+
 export interface Brief {
   id: string;
   workpackId: string;
@@ -62,7 +73,8 @@ export interface Brief {
   constraints: string;
   successCriteria: string;
   domainFacts: string;
-  status: string;
+  readinessSignals: ReadinessSignals;
+  status: BriefStatus;
 }
 
 export interface Box {
