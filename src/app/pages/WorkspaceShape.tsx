@@ -15,9 +15,10 @@ import {
   Package,
   Users,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
-import { useWorkpack, useBoxes, usePlan, useShape } from "../../hooks/useWorkpacks";
+import { useWorkpack, useBoxes, usePlan, useShape, useUpdateBox } from "../../hooks/useWorkpacks";
 import type { Box } from "../../lib/api";
 import { toast } from "sonner";
 
@@ -29,6 +30,7 @@ export function WorkspaceShape() {
   const { data: boxes = [], isLoading: loadingBoxes } = useBoxes(id!);
   const { data: plan } = usePlan(id!);
   const shape = useShape(id!);
+  const updateBox = useUpdateBox(id!);
 
   const [selectedBox, setSelectedBox] = useState<Box | null>(null);
   const [reshapeDialogOpen, setReshapeDialogOpen] = useState(false);
@@ -183,6 +185,9 @@ export function WorkspaceShape() {
                     </div>
                     <h1 className="text-3xl font-semibold">{activeBox.title}</h1>
                   </div>
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => setEditDialogOpen(true)}>
+                    <Pencil className="size-4" /> Edit
+                  </Button>
                 </div>
               </div>
 
@@ -269,6 +274,21 @@ export function WorkspaceShape() {
           </div>
         </div>
       </div>
+
+      <BoxEditDialog
+        box={activeBox}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={async (data) => {
+          if (!activeBox) return;
+          try {
+            await updateBox.mutateAsync({ boxId: activeBox.id, data });
+            toast.success("Box updated");
+          } catch (e: any) {
+            toast.error(e.message ?? "Failed to update box");
+          }
+        }}
+      />
     </div>
   );
 }

@@ -1,48 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-
-interface WorkBox {
-  id: string;
-  number: string;
-  title: string;
-  status: "ready" | "draft" | "too-broad" | "needs-review";
-  purpose?: string;
-  inputContext?: string;
-  expectedOutput?: string;
-  acceptanceCriteria?: string;
-  dependsOn?: string[];
-  handsOffTo?: string[];
-}
+import { Loader2 } from "lucide-react";
+import type { Box } from "../../lib/api";
 
 interface BoxEditDialogProps {
-  box: WorkBox | null;
+  box: Box | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (box: WorkBox) => void;
+  onSave: (data: Partial<Box>) => Promise<void>;
 }
 
 export function BoxEditDialog({ box, open, onOpenChange, onSave }: BoxEditDialogProps) {
-  const [editedBox, setEditedBox] = useState<WorkBox | null>(box);
+  const [form, setForm] = useState<Partial<Box>>({});
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    if (editedBox) {
-      onSave(editedBox);
+  useEffect(() => {
+    if (box) setForm({ title: box.title, purpose: box.purpose, inputContext: box.inputContext, expectedOutput: box.expectedOutput, acceptanceCriteria: box.acceptanceCriteria });
+  }, [box]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave(form);
       onOpenChange(false);
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (!box || !editedBox) return null;
+  if (!box) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Box: {box.number}</DialogTitle>
+          <DialogTitle>Edit {box.nodeId}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -50,41 +46,17 @@ export function BoxEditDialog({ box, open, onOpenChange, onSave }: BoxEditDialog
             <Label htmlFor="title">Title</Label>
             <Input
               id="title"
-              value={editedBox.title}
-              onChange={(e) =>
-                setEditedBox({ ...editedBox, title: e.target.value })
-              }
+              value={form.title ?? ""}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
             />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={editedBox.status}
-              onValueChange={(value: any) =>
-                setEditedBox({ ...editedBox, status: value })
-              }
-            >
-              <SelectTrigger id="status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ready">Ready</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="too-broad">Too broad</SelectItem>
-                <SelectItem value="needs-review">Needs review</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="purpose">Purpose</Label>
             <Textarea
               id="purpose"
-              value={editedBox.purpose || ""}
-              onChange={(e) =>
-                setEditedBox({ ...editedBox, purpose: e.target.value })
-              }
+              value={form.purpose ?? ""}
+              onChange={(e) => setForm({ ...form, purpose: e.target.value })}
               placeholder="What is this box meant to do?"
             />
           </div>
@@ -93,10 +65,8 @@ export function BoxEditDialog({ box, open, onOpenChange, onSave }: BoxEditDialog
             <Label htmlFor="inputContext">Input Context</Label>
             <Textarea
               id="inputContext"
-              value={editedBox.inputContext || ""}
-              onChange={(e) =>
-                setEditedBox({ ...editedBox, inputContext: e.target.value })
-              }
+              value={form.inputContext ?? ""}
+              onChange={(e) => setForm({ ...form, inputContext: e.target.value })}
               placeholder="What does this box receive?"
             />
           </div>
@@ -105,10 +75,8 @@ export function BoxEditDialog({ box, open, onOpenChange, onSave }: BoxEditDialog
             <Label htmlFor="expectedOutput">Expected Output</Label>
             <Textarea
               id="expectedOutput"
-              value={editedBox.expectedOutput || ""}
-              onChange={(e) =>
-                setEditedBox({ ...editedBox, expectedOutput: e.target.value })
-              }
+              value={form.expectedOutput ?? ""}
+              onChange={(e) => setForm({ ...form, expectedOutput: e.target.value })}
               placeholder="What should this box produce?"
             />
           </div>
@@ -117,23 +85,19 @@ export function BoxEditDialog({ box, open, onOpenChange, onSave }: BoxEditDialog
             <Label htmlFor="acceptanceCriteria">Acceptance Criteria</Label>
             <Textarea
               id="acceptanceCriteria"
-              value={editedBox.acceptanceCriteria || ""}
-              onChange={(e) =>
-                setEditedBox({
-                  ...editedBox,
-                  acceptanceCriteria: e.target.value,
-                })
-              }
+              value={form.acceptanceCriteria ?? ""}
+              onChange={(e) => setForm({ ...form, acceptanceCriteria: e.target.value })}
               placeholder="How do you know this box succeeded?"
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving && <Loader2 className="size-4 mr-2 animate-spin" />}
+            Save changes
           </Button>
-          <Button onClick={handleSave}>Save changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

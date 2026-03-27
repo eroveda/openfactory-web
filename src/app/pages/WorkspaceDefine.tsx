@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
-import { useWorkpack, usePins, useCreatePin, useDeletePin, useBrief } from "../../hooks/useWorkpacks";
+import { useWorkpack, usePins, useCreatePin, useDeletePin, useBrief, useMembers, useInviteMember } from "../../hooks/useWorkpacks";
 import { toast } from "sonner";
 
 const COLORS = ["yellow", "green", "blue", "purple"] as const;
@@ -43,6 +43,8 @@ export function WorkspaceDefine() {
   const { data: brief } = useBrief(id!);
   const createPin = useCreatePin(id!);
   const deletePin = useDeletePin(id!);
+  const { data: members = [] } = useMembers(id!);
+  const inviteMember = useInviteMember(id!);
 
   const [newPinText, setNewPinText] = useState("");
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -57,6 +59,17 @@ export function WorkspaceDefine() {
       setNewPinText("");
     } catch (e: any) {
       toast.error(e.message ?? "Failed to add pin");
+    }
+  };
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) return;
+    try {
+      await inviteMember.mutateAsync({ email: inviteEmail.trim() });
+      setInviteEmail("");
+      toast.success(`Invitation sent to ${inviteEmail.trim()}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to invite");
     }
   };
 
@@ -128,10 +141,27 @@ export function WorkspaceDefine() {
                             placeholder="colleague@example.com"
                             value={inviteEmail}
                             onChange={e => setInviteEmail(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter") handleInvite(); }}
                           />
-                          <Button onClick={() => setShareDialogOpen(false)}>Invite</Button>
+                          <Button onClick={handleInvite} disabled={inviteMember.isPending}>
+                            {inviteMember.isPending && <Loader2 className="size-4 mr-1 animate-spin" />}
+                            Invite
+                          </Button>
                         </div>
                       </div>
+                      {members.length > 0 && (
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Members</label>
+                          <div className="space-y-2">
+                            {members.map(m => (
+                              <div key={m.userId} className="flex items-center justify-between text-sm">
+                                <span>{m.user?.name ?? m.user?.email ?? m.userId}</span>
+                                <span className="text-slate-500 text-xs">{m.role}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </DialogContent>
                 </Dialog>

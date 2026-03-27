@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { workpacksApi, briefApi, boxesApi, planApi, handoffApi, pinsApi, userApi } from "../lib/api";
+import { workpacksApi, briefApi, boxesApi, planApi, handoffApi, pinsApi, userApi, membersApi } from "../lib/api";
+import type { MemberRole } from "../lib/api";
 
 // -----------------------------------------------------------------------
 // Workpacks
@@ -105,6 +106,15 @@ export function useBoxes(workpackId: string) {
   });
 }
 
+export function useUpdateBox(workpackId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ boxId, data }: { boxId: string; data: Parameters<typeof boxesApi.update>[2] }) =>
+      boxesApi.update(workpackId, boxId, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["boxes", workpackId] }),
+  });
+}
+
 // -----------------------------------------------------------------------
 // Plan
 // -----------------------------------------------------------------------
@@ -164,6 +174,35 @@ export function useDeletePin(workpackId: string) {
   return useMutation({
     mutationFn: (pinId: string) => pinsApi.delete(workpackId, pinId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["pins", workpackId] }),
+  });
+}
+
+// -----------------------------------------------------------------------
+// Members
+// -----------------------------------------------------------------------
+
+export function useMembers(workpackId: string) {
+  return useQuery({
+    queryKey: ["members", workpackId],
+    queryFn: () => membersApi.list(workpackId),
+    enabled: !!workpackId,
+  });
+}
+
+export function useInviteMember(workpackId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ email, role }: { email: string; role?: MemberRole }) =>
+      membersApi.add(workpackId, email, role),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["members", workpackId] }),
+  });
+}
+
+export function useRemoveMember(workpackId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => membersApi.remove(workpackId, userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["members", workpackId] }),
   });
 }
 

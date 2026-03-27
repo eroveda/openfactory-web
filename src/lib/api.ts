@@ -185,6 +185,30 @@ export const handoffApi = {
 };
 
 // -----------------------------------------------------------------------
+// Members
+// -----------------------------------------------------------------------
+
+export type MemberRole = "OWNER" | "EDITOR" | "VIEWER";
+
+export interface WorkpackMember {
+  workpackId: string;
+  userId: string;
+  role: MemberRole;
+  user?: { id: string; name: string; email: string };
+}
+
+export const membersApi = {
+  list: (workpackId: string) =>
+    request<WorkpackMember[]>("GET", `/api/workpacks/${workpackId}/members`),
+
+  add: (workpackId: string, email: string, role: MemberRole = "EDITOR") =>
+    request<WorkpackMember>("POST", `/api/workpacks/${workpackId}/members`, { email, role }),
+
+  remove: (workpackId: string, userId: string) =>
+    request<void>("DELETE", `/api/workpacks/${workpackId}/members/${userId}`),
+};
+
+// -----------------------------------------------------------------------
 // Download (authenticated blob)
 // -----------------------------------------------------------------------
 
