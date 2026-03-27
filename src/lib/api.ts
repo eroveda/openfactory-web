@@ -272,7 +272,7 @@ export const pinsApi = {
   list: (workpackId: string) =>
     request<Pin[]>("GET", `/api/workpacks/${workpackId}/pins`),
 
-  create: (workpackId: string, content: string, type = "TEXT") =>
+  create: (workpackId: string, content: string, type = "UNKNOWN") =>
     request<Pin>("POST", `/api/workpacks/${workpackId}/pins`, { content, type }),
 
   delete: (workpackId: string, pinId: string) =>
