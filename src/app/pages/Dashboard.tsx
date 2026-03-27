@@ -82,6 +82,7 @@ export function Dashboard() {
   const { open: commandOpen, setOpen: setCommandOpen } = useCommandPalette();
   const [searchQuery, setSearchQuery] = useState("");
   const [ingestOpen, setIngestOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
@@ -108,12 +109,10 @@ export function Dashboard() {
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!confirm("Delete this workspace?")) return;
+  const handleDelete = async (id: string) => {
     try {
       await deleteWp.mutateAsync(id);
+      setDeleteTarget(null);
     } catch (e: any) {
       toast.error(e.message ?? "Failed to delete");
     }
@@ -252,17 +251,6 @@ export function Dashboard() {
             <p className="text-slate-600">Manage and collaborate on your work packages</p>
           </div>
 
-          {searchQuery && (
-            <div className="mb-4">
-              <Input
-                placeholder="Search workspaces…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
-          )}
-
           {isLoading && (
             <div className="grid gap-4">
               {[1, 2, 3].map(i => (
@@ -281,6 +269,17 @@ export function Dashboard() {
             <div className="flex items-center gap-2 text-red-600 bg-red-50 border border-red-200 rounded-lg p-4">
               <AlertCircle className="size-5" />
               Failed to load workspaces. Is the API running?
+            </div>
+          )}
+
+          {!isLoading && !error && workpacks.length > 3 && (
+            <div className="mb-4">
+              <Input
+                placeholder="Filter workspaces…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
+              />
             </div>
           )}
 
@@ -318,7 +317,7 @@ export function Dashboard() {
                             }
                           </Badge>
                           <button
-                            onClick={(e) => handleDelete(e, w.id)}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteTarget(w.id); }}
                             className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all"
                           >
                             <Trash2 className="size-4" />
@@ -344,6 +343,29 @@ export function Dashboard() {
 
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
       <OnboardingModal open={onboarding.open} onClose={onboarding.hide} />
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete workspace</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-600">
+            This will permanently delete the workspace and all its boxes, brief, and plan. This cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteTarget && handleDelete(deleteTarget)}
+              disabled={deleteWp.isPending}
+            >
+              {deleteWp.isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
