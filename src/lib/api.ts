@@ -185,6 +185,23 @@ export const handoffApi = {
 };
 
 // -----------------------------------------------------------------------
+// Download (authenticated blob)
+// -----------------------------------------------------------------------
+
+export async function downloadWorkpackZip(id: string): Promise<void> {
+  const headers = await authHeaders();
+  const res = await fetch(`${API_URL}/api/workpacks/${id}/download`, { headers });
+  if (!res.ok) throw new Error(`Download failed: HTTP ${res.status}`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `workpack-${id}.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// -----------------------------------------------------------------------
 // Pins
 // -----------------------------------------------------------------------
 

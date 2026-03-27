@@ -1,68 +1,75 @@
-import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useParams } from "react-router";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Textarea } from "../components/ui/textarea";
-import { ExportDialog } from "../components/ExportDialog";
 import { toast } from "sonner";
-import { motion } from "motion/react";
 import {
   Box as BoxIcon,
   ArrowLeft,
   Download,
   CheckCircle2,
   Package,
-  FileJson,
-  Send,
-  Copy,
-  Share2,
-  Sparkles,
-  Users,
-  Clock,
-  Lightbulb,
   FileText,
   Zap,
   Settings,
   AlertCircle,
+  Lightbulb,
+  Loader2,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { useWorkpack, useBoxes, useBrief, useHandoff, useUpdateHandoff } from "../../hooks/useWorkpacks";
+import { downloadWorkpackZip } from "../../lib/api";
 
 export function WorkspaceBox() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+
+  const { data: workpack } = useWorkpack(id!);
+  const { data: boxes = [] } = useBoxes(id!);
+  const { data: brief } = useBrief(id!);
+  const { data: handoff } = useHandoff(id!);
+  const updateHandoff = useUpdateHandoff(id!);
+
   const [handoffNotes, setHandoffNotes] = useState("");
-  const [packageStatus, setPackageStatus] = useState<"assembling" | "ready">("ready");
-  const [approvalStatus, setApprovalStatus] = useState<"pending" | "approved" | null>(null);
+  const [notesDirty, setNotesDirty] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  // Sync handoff notes from API once loaded
+  useEffect(() => {
+    if (handoff?.handoffNotes && !notesDirty) {
+      setHandoffNotes(handoff.handoffNotes);
+    }
+  }, [handoff?.handoffNotes]);
+
+  const saveNotes = async () => {
+    try {
+      await updateHandoff.mutateAsync({ handoffNotes });
+      setNotesDirty(false);
+      toast.success("Handoff notes saved");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to save notes");
+    }
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await downloadWorkpackZip(id!);
+      toast.success("Package downloaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Download failed");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const readinessSignals = [
-    { label: "Brief included", status: "complete" },
-    { label: "Boxes packaged", status: "complete" },
-    { label: "Work sequence attached", status: "complete" },
-    { label: "Package is portable", status: "complete" },
-    { label: "Handoff notes present", status: handoffNotes ? "complete" : "warning" },
+    { label: "Brief included",           status: brief ? "complete" : "incomplete" },
+    { label: "Boxes packaged",           status: boxes.length > 0 ? "complete" : "incomplete" },
+    { label: "Package is portable",      status: "complete" },
+    { label: "Handoff notes present",    status: handoffNotes.trim() ? "complete" : "warning" },
   ];
 
   const completedSignals = readinessSignals.filter(s => s.status === "complete").length;
-
-  const handleExport = () => {
-    toast.success("Package exported successfully!", {
-      description: "Your BoxPackage has been downloaded."
-    });
-  };
-
-  const handleRequestApproval = () => {
-    setApprovalStatus("pending");
-    toast.info("Approval request sent", {
-      description: "Sarah Miller will be notified to review the package."
-    });
-  };
-
-  const mockApprove = () => {
-    setApprovalStatus("approved");
-    toast.success("Package approved!", {
-      description: "Sarah Miller has approved this package."
-    });
-  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -73,49 +80,36 @@ export function WorkspaceBox() {
             <div className="flex items-center gap-4">
               <Link to={`/workspace/${id}/shape`}>
                 <Button variant="ghost" size="sm" className="gap-2">
-                  <ArrowLeft className="size-4" />
-                  Back to Shape
+                  <ArrowLeft className="size-4" /> Back to Shape
                 </Button>
               </Link>
               <div className="h-4 w-px bg-slate-300" />
               <div className="flex items-center gap-2">
                 <BoxIcon className="size-5 text-blue-600" />
-                <span className="font-semibold">openFactory</span>
+                <span className="font-semibold">{workpack?.title ?? "Workspace"}</span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <Badge variant="outline" className="gap-1">
-                <CheckCircle2 className="size-3 text-green-600" />
-                Raw / Define
+                <CheckCircle2 className="size-3 text-green-600" /> Raw / Define
               </Badge>
               <Badge variant="outline" className="gap-1">
-                <CheckCircle2 className="size-3 text-green-600" />
-                Shape
+                <CheckCircle2 className="size-3 text-green-600" /> Shape
               </Badge>
               <Badge variant="outline" className="gap-1 bg-blue-100">
-                <div className="size-2 rounded-full bg-blue-600" />
-                Box
+                <div className="size-2 rounded-full bg-blue-600" /> Box
               </Badge>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center -space-x-2">
-                <Avatar className="size-8 border-2 border-white">
-                  <AvatarFallback className="bg-blue-600 text-white text-xs">JD</AvatarFallback>
-                </Avatar>
-                <Avatar className="size-8 border-2 border-white">
-                  <AvatarFallback className="bg-green-600 text-white text-xs">SM</AvatarFallback>
-                </Avatar>
-              </div>
-            </div>
+            <div className="w-24" />
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <div className="flex h-[calc(100vh-73px)]">
-        {/* Center Column - Package Details */}
+        {/* Center Column */}
         <div className="flex-1 p-8 overflow-auto">
           <div className="max-w-3xl mx-auto">
             <div className="mb-8">
@@ -126,31 +120,17 @@ export function WorkspaceBox() {
                   <p className="text-slate-600">Your production folder — ready to hand off.</p>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-3 mt-4">
-                <Badge className="bg-blue-100 text-blue-800 border-blue-300">
-                  {packageStatus === "assembling" ? "Assembling..." : "Ready"}
-                </Badge>
-                {approvalStatus === "pending" && (
-                  <Badge className="bg-amber-100 text-amber-800 border-amber-300">
-                    Pending approval from SM
-                  </Badge>
-                )}
-                {approvalStatus === "approved" && (
-                  <Badge className="bg-green-100 text-green-800 border-green-300">
-                    <CheckCircle2 className="size-3 mr-1" />
-                    Approved by SM · March 24
-                  </Badge>
-                )}
+              <div className="mt-4">
+                <Badge className="bg-blue-100 text-blue-800 border-blue-300">Ready</Badge>
               </div>
             </div>
 
-            {/* Production Package Card */}
+            {/* Package Card */}
             <div className="bg-white border rounded-lg mb-6">
               <div className="border-b p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-xl font-semibold">Sistema de órdenes</h2>
-                  <Badge variant="outline">5 artifacts · ready for handoff</Badge>
+                  <h2 className="text-xl font-semibold">{workpack?.title ?? "—"}</h2>
+                  <Badge variant="outline">{boxes.length} boxes · ready for handoff</Badge>
                 </div>
               </div>
 
@@ -171,30 +151,16 @@ export function WorkspaceBox() {
                       <BoxIcon className="size-5 text-amber-700" />
                       <span className="font-medium text-sm">boxes/</span>
                     </div>
-                    <p className="text-xs text-amber-700">5 execution units</p>
+                    <p className="text-xs text-amber-700">{boxes.length} execution units</p>
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Zap className="size-5 text-blue-700" />
-                      <span className="font-medium text-sm">execution-plan.yaml</span>
+                      <span className="font-medium text-sm">plan.json</span>
                     </div>
                     <p className="text-xs text-blue-700">Run order · dependencies</p>
                   </div>
-                </div>
-
-                <div className="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Settings className="size-5 text-purple-700" />
-                    <span className="font-medium text-sm">manifest.md</span>
-                  </div>
-                  <p className="text-xs text-purple-700">Human-readable summary</p>
-                </div>
-
-                <div className="mt-3 flex justify-center">
-                  <Button variant="link" size="sm" className="text-blue-600">
-                    + Add handoff notes
-                  </Button>
                 </div>
               </div>
 
@@ -207,45 +173,50 @@ export function WorkspaceBox() {
                       <Lightbulb className="size-4" />
                       <span>Project</span>
                     </div>
-                    <p className="font-medium">Sistema de órdenes</p>
+                    <p className="font-medium">{workpack?.title ?? "—"}</p>
                   </div>
 
-                  <div className="grid grid-cols-[120px_1fr] gap-4 text-sm">
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <FileText className="size-4" />
-                      <span>Main idea</span>
+                  {brief && (
+                    <div className="grid grid-cols-[120px_1fr] gap-4 text-sm">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <FileText className="size-4" />
+                        <span>Main idea</span>
+                      </div>
+                      <p>{brief.mainIdea}</p>
                     </div>
-                    <p>Order management system for an API client, excluding payments</p>
-                  </div>
+                  )}
 
                   <div className="grid grid-cols-[120px_1fr] gap-4 text-sm">
                     <div className="flex items-center gap-2 text-slate-600">
                       <BoxIcon className="size-4" />
                       <span>Boxes</span>
                     </div>
-                    <p>5</p>
+                    <p>{boxes.length}</p>
                   </div>
 
                   <div className="grid grid-cols-[120px_1fr] gap-4 text-sm">
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <Zap className="size-4" />
-                      <span>Run order</span>
-                    </div>
-                    <p className="font-mono text-xs">Sequential + 1 parallel stage</p>
-                  </div>
-
-                  <div className="grid grid-cols-[120px_1fr] gap-4 text-sm">
-                    <div className="flex items-center gap-2 text-slate-600">
+                    <div className="flex items-start gap-2 text-slate-600 pt-1">
                       <Settings className="size-4" />
                       <span>Handoff notes</span>
                     </div>
-                    <div className="flex-1">
+                    <div>
                       <Textarea
                         placeholder="Add context for the executor..."
                         value={handoffNotes}
-                        onChange={(e) => setHandoffNotes(e.target.value)}
-                        className="min-h-[100px]"
+                        onChange={(e) => { setHandoffNotes(e.target.value); setNotesDirty(true); }}
+                        className="min-h-[100px] mb-2"
                       />
+                      {notesDirty && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={saveNotes}
+                          disabled={updateHandoff.isPending}
+                        >
+                          {updateHandoff.isPending && <Loader2 className="size-3 mr-1 animate-spin" />}
+                          Save notes
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -254,36 +225,13 @@ export function WorkspaceBox() {
 
             {/* Actions */}
             <div className="flex gap-3">
-              {approvalStatus === null && (
-                <>
-                  <Button onClick={handleExport} className="gap-2 flex-1">
-                    <Download className="size-4" />
-                    Export package
-                  </Button>
-                  <Button onClick={handleRequestApproval} variant="outline" className="flex-1">
-                    Request approval
-                  </Button>
-                </>
-              )}
-              
-              {approvalStatus === "pending" && (
-                <>
-                  <Button onClick={mockApprove} variant="outline" className="gap-2 flex-1">
-                    <CheckCircle2 className="size-4" />
-                    Approve (simulate)
-                  </Button>
-                  <Button variant="outline" className="flex-1">
-                    Request changes
-                  </Button>
-                </>
-              )}
-
-              {approvalStatus === "approved" && (
-                <Button onClick={handleExport} className="gap-2 flex-1">
-                  <Download className="size-4" />
-                  Export approved package
-                </Button>
-              )}
+              <Button onClick={handleDownload} disabled={downloading} className="gap-2 flex-1">
+                {downloading
+                  ? <Loader2 className="size-4 animate-spin" />
+                  : <Download className="size-4" />
+                }
+                Export package
+              </Button>
             </div>
           </div>
         </div>
@@ -292,7 +240,7 @@ export function WorkspaceBox() {
         <div className="w-80 bg-white border-l p-6 overflow-auto">
           <div className="mb-6">
             <h2 className="font-semibold mb-4">Readiness</h2>
-            
+
             <div className="space-y-3 mb-6">
               {readinessSignals.map((signal, i) => (
                 <div key={i} className="flex items-start gap-3">
@@ -303,17 +251,15 @@ export function WorkspaceBox() {
                   ) : (
                     <div className="size-5 rounded-full border-2 border-slate-300 flex-shrink-0 mt-0.5" />
                   )}
-                  <div className="flex-1">
-                    <p className={`text-sm font-medium ${
-                      signal.status === "complete" 
-                        ? "text-green-900" 
-                        : signal.status === "warning"
-                        ? "text-amber-900"
-                        : "text-slate-600"
-                    }`}>
-                      {signal.label}
-                    </p>
-                  </div>
+                  <p className={`text-sm font-medium ${
+                    signal.status === "complete"
+                      ? "text-green-900"
+                      : signal.status === "warning"
+                      ? "text-amber-900"
+                      : "text-slate-600"
+                  }`}>
+                    {signal.label}
+                  </p>
                 </div>
               ))}
             </div>
@@ -323,7 +269,7 @@ export function WorkspaceBox() {
                 {completedSignals} of {readinessSignals.length} complete
               </div>
               <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-blue-600 transition-all"
                   style={{ width: `${(completedSignals / readinessSignals.length) * 100}%` }}
                 />
@@ -331,18 +277,15 @@ export function WorkspaceBox() {
             </div>
           </div>
 
-          {/* Export Info */}
           <div className="pt-6 border-t">
             <h3 className="text-sm font-semibold mb-3">Export Format</h3>
             <div className="bg-slate-50 rounded-lg p-4">
-              <p className="text-sm text-slate-700 mb-2">
-                BoxPackage will include:
-              </p>
+              <p className="text-sm text-slate-700 mb-2">BoxPackage includes:</p>
               <ul className="text-xs text-slate-600 space-y-1">
                 <li>• Markdown brief</li>
-                <li>• JSON box definitions</li>
-                <li>• YAML execution plan</li>
-                <li>• Manifest summary</li>
+                <li>• Box definitions (.md)</li>
+                <li>• JSON execution plan</li>
+                <li>• README summary</li>
               </ul>
             </div>
           </div>

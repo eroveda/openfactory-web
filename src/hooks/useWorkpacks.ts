@@ -129,6 +129,15 @@ export function useHandoff(workpackId: string) {
   });
 }
 
+export function useUpdateHandoff(workpackId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Parameters<typeof handoffApi.update>[1]) =>
+      handoffApi.update(workpackId, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["handoff", workpackId] }),
+  });
+}
+
 // -----------------------------------------------------------------------
 // Pins
 // -----------------------------------------------------------------------
