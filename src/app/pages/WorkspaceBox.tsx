@@ -20,6 +20,7 @@ import {
 import { useWorkpack, useBoxes, useBrief, useHandoff, useUpdateHandoff, useRequestApproval } from "../../hooks/useWorkpacks";
 import { downloadWorkpackZip } from "../../lib/api";
 import { InboxBell } from "../components/InboxBell";
+import { InfoTooltip } from "../components/InfoTooltip";
 
 export function WorkspaceBox() {
   const { id } = useParams<{ id: string }>();
@@ -259,7 +260,14 @@ export function WorkspaceBox() {
         {/* Right Column - Readiness */}
         <div className="w-80 bg-white border-l p-6 overflow-auto">
           <div className="mb-6">
-            <h2 className="font-semibold mb-4">Readiness</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="font-semibold">Readiness</h2>
+              <InfoTooltip
+                title="What's inside a package?"
+                body={["A package bundles: a brief, a set of boxes, a work sequence, and optional handoff notes.", "This is what gets handed to another person, agent or external runtime."]}
+                footer="This is what gets handed to another person, agent or external runtime."
+              />
+            </div>
 
             <div className="space-y-3 mb-6">
               {readinessSignals.map((signal, i) => (
@@ -298,7 +306,13 @@ export function WorkspaceBox() {
           </div>
 
           <div className="pt-6 border-t">
-            <h3 className="text-sm font-semibold mb-3">Export Format</h3>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              Export Format
+              <InfoTooltip
+                title="What is in the package?"
+                body="brief.md · boxes/ · plan.json · README.md — everything the executor needs to start without asking questions."
+              />
+            </h3>
             <div className="bg-slate-50 rounded-lg p-4">
               <p className="text-sm text-slate-700 mb-2">BoxPackage includes:</p>
               <ul className="text-xs text-slate-600 space-y-1">

@@ -20,6 +20,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { useWorkpack, useBoxes, usePlan, useShape, useUpdateBox } from "../../hooks/useWorkpacks";
 import { InboxBell } from "../components/InboxBell";
+import { InfoTooltip } from "../components/InfoTooltip";
 import type { Box } from "../../lib/api";
 import { toast } from "sonner";
 
@@ -108,7 +109,14 @@ export function WorkspaceShape() {
         <div className="w-80 bg-white border-r p-6 overflow-auto">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Work Map</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold">Work Map</h2>
+                <InfoTooltip
+                  title="Why split work into boxes?"
+                  body="A single broad instruction is often too vague to execute well. Boxes break the work into smaller, clearer units so each step can be refined, validated and handed off with less ambiguity."
+                  footer="Better boxes usually lead to better execution."
+                />
+              </div>
               <Dialog open={reshapeDialogOpen} onOpenChange={setReshapeDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-2">
@@ -164,7 +172,14 @@ export function WorkspaceShape() {
           {/* Work Sequence */}
           {plan && (
             <div className="mt-8 pt-6 border-t">
-              <h3 className="text-sm font-semibold mb-3">Execution Plan</h3>
+              <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-semibold">Execution Plan</h3>
+              <InfoTooltip
+                title="Why sequence matters"
+                body={["Good execution is not only about defining the work. It is also about knowing: what comes first, what depends on what, what can run in parallel, and what is still blocked."]}
+                footer="The work sequence turns separate boxes into a coherent handoff."
+              />
+            </div>
               <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-700">
                 v{plan.version} · {plan.status}
               </div>
@@ -235,7 +250,14 @@ export function WorkspaceShape() {
         {/* Right Column - Readiness */}
         <div className="w-80 bg-white border-l p-6 overflow-auto">
           <div className="mb-6">
-            <h2 className="font-semibold mb-4">Readiness</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="font-semibold">Readiness</h2>
+              <InfoTooltip
+                title="What is a box?"
+                body={["A box is one clear unit of work for execution.", "Each box defines: what needs to be done, what goes in, what should come out, and what it depends on."]}
+                footer="Boxes reduce ambiguity and make work easier to hand off."
+              />
+            </div>
 
             <div className="space-y-3 mb-6">
               {[

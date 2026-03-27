@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "../components/ui/input";
 import { useWorkpack, usePins, useCreatePin, useDeletePin, useMembers, useInviteMember, useShape } from "../../hooks/useWorkpacks";
 import { InboxBell } from "../components/InboxBell";
+import { InfoTooltip } from "../components/InfoTooltip";
 import { toast } from "sonner";
 
 // -----------------------------------------------------------------------
@@ -263,7 +264,14 @@ export function WorkspaceDefine() {
 
               {/* Intro */}
               <div className="mb-8">
-                <h1 className="text-2xl font-semibold mb-1">Raw / Define</h1>
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-2xl font-semibold">Raw / Define</h1>
+                  <InfoTooltip
+                    title="What is the live brief?"
+                    body="The live brief is an evolving summary of the work as you add raw material. It helps surface the main idea, constraints, missing pieces and overall readiness before shaping boxes."
+                    footer="It is not final yet — it becomes clearer as you write."
+                  />
+                </div>
                 <p className="text-slate-500 text-sm">
                   Answer a few questions to define your idea. Each answer becomes a context signal for the AI.
                 </p>
@@ -407,7 +415,14 @@ export function WorkspaceDefine() {
         {/* Right — Readiness */}
         <div className="w-80 bg-white border-l p-6 overflow-auto flex flex-col">
           <div className="flex-1">
-            <h2 className="font-semibold mb-4">Readiness</h2>
+            <div className="flex items-center gap-2 mb-4">
+            <h2 className="font-semibold">Readiness</h2>
+            <InfoTooltip
+              title="What is readiness?"
+              body="Readiness signals show whether the work is clear enough to move forward. They do not judge the business idea — they indicate whether the project is defined well enough for shaping and handoff."
+              footer="Readiness helps you move with less guesswork."
+            />
+          </div>
 
             <div className="space-y-3 mb-6">
               {readinessSignals.map((signal, i) => (

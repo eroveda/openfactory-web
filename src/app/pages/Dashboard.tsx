@@ -18,6 +18,7 @@ import {
   Loader2,
   AlertCircle,
   Trash2,
+  HelpCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,6 +30,7 @@ import {
 import { useAuthStore } from "../../store/authStore";
 import { useWorkpacks, useIngest, useDeleteWorkpack } from "../../hooks/useWorkpacks";
 import { InboxBell } from "../components/InboxBell";
+import { OnboardingModal, useOnboarding } from "../components/OnboardingModal";
 import type { Workpack } from "../../lib/api";
 import { toast } from "sonner";
 
@@ -86,6 +88,7 @@ export function Dashboard() {
   const { data: workpacks = [], isLoading, error } = useWorkpacks();
   const ingest = useIngest();
   const deleteWp = useDeleteWorkpack();
+  const onboarding = useOnboarding();
 
   const filtered = workpacks.filter((w) =>
     w.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -189,6 +192,14 @@ export function Dashboard() {
                 Profile
               </Button>
             </Link>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-slate-500"
+              onClick={onboarding.show}
+            >
+              <HelpCircle className="size-4" />
+              How it works
+            </Button>
           </div>
         </nav>
 
@@ -324,6 +335,7 @@ export function Dashboard() {
       </main>
 
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
+      <OnboardingModal open={onboarding.open} onClose={onboarding.hide} />
     </div>
   );
 }
