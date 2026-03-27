@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
-import { useWorkpack, usePins, useCreatePin, useDeletePin, useBrief, useMembers, useInviteMember } from "../../hooks/useWorkpacks";
+import { useWorkpack, usePins, useCreatePin, useDeletePin, useBrief, useMembers, useInviteMember, useShape } from "../../hooks/useWorkpacks";
 import { InboxBell } from "../components/InboxBell";
 import { toast } from "sonner";
 
@@ -46,6 +46,7 @@ export function WorkspaceDefine() {
   const deletePin = useDeletePin(id!);
   const { data: members = [] } = useMembers(id!);
   const inviteMember = useInviteMember(id!);
+  const shape = useShape(id!);
 
   const [newPinText, setNewPinText] = useState("");
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -172,11 +173,11 @@ export function WorkspaceDefine() {
           </div>
         </header>
 
-        {/* Processing banner */}
-        {isProcessing && (
+        {/* Processing banner — solo visible si el usuario ya disparó el pipeline desde esta página */}
+        {shape.isPending && (
           <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center gap-2 text-amber-800 text-sm">
             <Loader2 className="size-4 animate-spin" />
-            Pipeline running — brief and boxes will appear once complete…
+            Generating shape — this may take a moment…
           </div>
         )}
 
@@ -243,13 +244,13 @@ export function WorkspaceDefine() {
               <div className="flex items-center gap-2 mb-4">
                 <div className="size-2 rounded-full bg-blue-500 animate-pulse" />
                 <span className="text-sm font-medium text-blue-600">LIVE BRIEF</span>
-                {isProcessing && <span className="text-xs text-slate-500">· generating…</span>}
+                {shape.isPending && <span className="text-xs text-slate-500">· generating…</span>}
               </div>
 
-              {isProcessing ? (
+              {shape.isPending ? (
                 <div className="text-center py-12 text-slate-500">
                   <Loader2 className="size-12 mx-auto mb-3 opacity-30 animate-spin" />
-                  <p className="text-sm">Pipeline running…</p>
+                  <p className="text-sm">Generating shape…</p>
                 </div>
               ) : brief ? (
                 <>
@@ -282,11 +283,22 @@ export function WorkspaceDefine() {
                   </div>
 
                   <Button
-                    onClick={() => navigate(`/workspace/${id}/shape`)}
+                    onClick={async () => {
+                      try {
+                        await shape.mutateAsync();
+                        navigate(`/workspace/${id}/shape`);
+                      } catch (e: any) {
+                        toast.error(e.message ?? "Failed to generate shape");
+                      }
+                    }}
+                    disabled={shape.isPending}
                     className="w-full gap-2"
                     size="lg"
                   >
-                    View Shape <ArrowRight className="size-4" />
+                    {shape.isPending
+                      ? <><Loader2 className="size-4 animate-spin" /> Generating…</>
+                      : <>Generate Shape <ArrowRight className="size-4" /></>
+                    }
                   </Button>
                 </>
               ) : pins.length === 0 ? (
