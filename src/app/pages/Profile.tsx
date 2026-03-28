@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import { Box, ArrowLeft, Loader2 } from "lucide-react";
+import { Box, ArrowLeft, Loader2, Camera } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { useAuthStore } from "../../store/authStore";
 import { useMe } from "../../hooks/useWorkpacks";
 import { userApi } from "../../lib/api";
+import { supabase } from "../../lib/supabase";
 import { toast } from "sonner";
 
 function userInitials(name?: string | null) {
@@ -22,6 +23,8 @@ export function Profile() {
 
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile?.name) setName(profile.name);
@@ -37,6 +40,37 @@ export function Profile() {
       toast.error(e.message ?? "Failed to update profile");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!user) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      toast.error("Only PNG, JPEG, or WebP images are supported");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2 MB");
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "png";
+      const path = `avatars/${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("attachments")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw new Error(uploadError.message);
+      const { data } = supabase.storage.from("attachments").getPublicUrl(path);
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: data.publicUrl },
+      });
+      if (updateError) throw new Error(updateError.message);
+      toast.success("Avatar updated");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to upload avatar");
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -80,15 +114,34 @@ export function Profile() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-4">
-                  <Avatar className="size-16">
-                    {avatarUrl && <AvatarImage src={avatarUrl} />}
-                    <AvatarFallback className="bg-blue-600 text-white text-xl">
-                      {userInitials(displayName)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div
+                    className="relative group cursor-pointer"
+                    onClick={() => avatarInputRef.current?.click()}
+                  >
+                    <Avatar className="size-16">
+                      {avatarUrl && <AvatarImage src={avatarUrl} />}
+                      <AvatarFallback className="bg-blue-600 text-white text-xl">
+                        {userInitials(displayName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      {uploadingAvatar
+                        ? <Loader2 className="size-5 text-white animate-spin" />
+                        : <Camera className="size-5 text-white" />
+                      }
+                    </div>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleAvatarUpload(f); }}
+                    />
+                  </div>
                   <div>
                     <p className="font-medium">{displayName}</p>
                     <p className="text-sm text-slate-500">{profile?.email ?? user?.email}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Click avatar to change photo</p>
                   </div>
                 </div>
 

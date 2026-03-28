@@ -16,10 +16,11 @@ import {
   Users,
   Loader2,
   Pencil,
+  X,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
-import { useWorkpack, useBoxes, usePlan, useBrief, useShape, useUpdateBox, useMembers, useInviteMember } from "../../hooks/useWorkpacks";
+import { useWorkpack, useBoxes, usePlan, useBrief, useShape, useUpdateBox, useMembers, useInviteMember, useRemoveMember, useUpdateTitle } from "../../hooks/useWorkpacks";
 import { Skeleton } from "../components/ui/skeleton";
 import { StagePills } from "../components/StagePills";
 import { InboxBell } from "../components/InboxBell";
@@ -40,12 +41,16 @@ export function WorkspaceShape() {
 
   const { data: members = [] } = useMembers(id!);
   const inviteMember = useInviteMember(id!);
+  const removeMember = useRemoveMember(id!);
+  const updateTitle = useUpdateTitle(id!);
 
   const [selectedBox, setSelectedBox] = useState<Box | null>(null);
   const [reshapeDialogOpen, setReshapeDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState("");
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
@@ -55,6 +60,19 @@ export function WorkspaceShape() {
       toast.success(`Invitation sent to ${inviteEmail.trim()}`);
     } catch (e: any) {
       toast.error(e.message ?? "Failed to invite");
+    }
+  };
+
+  const saveTitle = async () => {
+    if (!titleValue.trim() || titleValue.trim() === workpack?.title) {
+      setEditingTitle(false);
+      return;
+    }
+    try {
+      await updateTitle.mutateAsync(titleValue.trim());
+      setEditingTitle(false);
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to update title");
     }
   };
 
@@ -90,7 +108,24 @@ export function WorkspaceShape() {
               <div className="h-4 w-px bg-slate-300" />
               <div className="flex items-center gap-2">
                 <BoxIcon className="size-5 text-blue-600" />
-                <span className="font-semibold">{workpack?.title ?? "Workspace"}</span>
+                {editingTitle ? (
+                  <Input
+                    autoFocus
+                    value={titleValue}
+                    onChange={e => setTitleValue(e.target.value)}
+                    onBlur={saveTitle}
+                    onKeyDown={e => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
+                    className="h-7 text-sm font-semibold w-48"
+                  />
+                ) : (
+                  <span
+                    className="font-semibold cursor-pointer hover:text-blue-600 flex items-center gap-1 group"
+                    onClick={() => { setTitleValue(workpack?.title ?? ""); setEditingTitle(true); }}
+                  >
+                    {workpack?.title ?? "Workspace"}
+                    <Pencil className="size-3 opacity-0 group-hover:opacity-40" />
+                  </span>
+                )}
               </div>
             </div>
 
@@ -129,7 +164,17 @@ export function WorkspaceShape() {
                           {members.map(m => (
                             <div key={m.userId} className="flex items-center justify-between text-sm">
                               <span>{m.user?.name ?? m.user?.email ?? m.userId}</span>
-                              <span className="text-slate-500 text-xs">{m.role}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-500 text-xs">{m.role}</span>
+                                {m.role !== "OWNER" && (
+                                  <button
+                                    onClick={() => removeMember.mutate(m.userId)}
+                                    className="text-slate-300 hover:text-red-500 transition-colors"
+                                  >
+                                    <X className="size-3.5" />
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>

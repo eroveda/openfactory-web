@@ -16,10 +16,12 @@ import {
   Send,
   Trash2,
   Plus,
+  Pencil,
+  X,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
-import { useWorkpack, usePins, useCreatePin, useDeletePin, useMembers, useInviteMember, useShape, useBrief, useAttachments, useCreateAttachment, useDeleteAttachment } from "../../hooks/useWorkpacks";
+import { useWorkpack, usePins, useCreatePin, useDeletePin, useMembers, useInviteMember, useRemoveMember, useUpdateTitle, useShape, useBrief, useAttachments, useCreateAttachment, useDeleteAttachment } from "../../hooks/useWorkpacks";
 import { InboxBell } from "../components/InboxBell";
 import { InfoTooltip } from "../components/InfoTooltip";
 import { DropZone } from "../components/DropZone";
@@ -116,6 +118,8 @@ export function WorkspaceDefine() {
   const deletePin = useDeletePin(id!);
   const { data: members = [] } = useMembers(id!);
   const inviteMember = useInviteMember(id!);
+  const removeMember = useRemoveMember(id!);
+  const updateTitle = useUpdateTitle(id!);
   const { data: brief } = useBrief(id!);
   const shape = useShape(id!);
   const { data: attachments = [] } = useAttachments(id!);
@@ -127,6 +131,8 @@ export function WorkspaceDefine() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [extraOpen, setExtraOpen] = useState(false);
   const [extraText, setExtraText] = useState("");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Current step = number of pins already answered (capped at questions length)
@@ -172,6 +178,19 @@ export function WorkspaceDefine() {
     }
   };
 
+  const saveTitle = async () => {
+    if (!titleValue.trim() || titleValue.trim() === workpack?.title) {
+      setEditingTitle(false);
+      return;
+    }
+    try {
+      await updateTitle.mutateAsync(titleValue.trim());
+      setEditingTitle(false);
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to update title");
+    }
+  };
+
   const handleShape = async () => {
     try {
       await shape.mutateAsync();
@@ -201,7 +220,24 @@ export function WorkspaceDefine() {
               <div className="h-4 w-px bg-slate-300" />
               <div className="flex items-center gap-2">
                 <Box className="size-5 text-blue-600" />
-                <span className="font-semibold">{workpack?.title ?? "Workspace"}</span>
+                {editingTitle ? (
+                  <Input
+                    autoFocus
+                    value={titleValue}
+                    onChange={e => setTitleValue(e.target.value)}
+                    onBlur={saveTitle}
+                    onKeyDown={e => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
+                    className="h-7 text-sm font-semibold w-48"
+                  />
+                ) : (
+                  <span
+                    className="font-semibold cursor-pointer hover:text-blue-600 flex items-center gap-1 group"
+                    onClick={() => { setTitleValue(workpack?.title ?? ""); setEditingTitle(true); }}
+                  >
+                    {workpack?.title ?? "Workspace"}
+                    <Pencil className="size-3 opacity-0 group-hover:opacity-40" />
+                  </span>
+                )}
               </div>
             </div>
 
@@ -240,7 +276,17 @@ export function WorkspaceDefine() {
                           {members.map(m => (
                             <div key={m.userId} className="flex items-center justify-between text-sm">
                               <span>{m.user?.name ?? m.user?.email ?? m.userId}</span>
-                              <span className="text-slate-500 text-xs">{m.role}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-500 text-xs">{m.role}</span>
+                                {m.role !== "OWNER" && (
+                                  <button
+                                    onClick={() => removeMember.mutate(m.userId)}
+                                    className="text-slate-300 hover:text-red-500 transition-colors"
+                                  >
+                                    <X className="size-3.5" />
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
