@@ -3,6 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "../components/ui/button";
 import { BoxEditDialog } from "../components/BoxEditDialog";
+import { ShapeChatPanel } from "../components/ShapeChatPanel";
+import { AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -42,6 +44,7 @@ export function WorkspaceShape() {
   const updateTitle = useUpdateTitle(id!);
 
   const [selectedBox, setSelectedBox] = useState<Box | null>(null);
+  const [chatPanelOpen, setChatPanelOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [reshapeDialogOpen, setReshapeDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -282,9 +285,21 @@ export function WorkspaceShape() {
           <WorkMapCanvas
             boxes={boxes}
             planSteps={plan?.steps ?? null}
-            onBoxClick={box => { setSelectedBox(box); setEditDialogOpen(true); }}
+            onBoxClick={box => { setSelectedBox(box); setChatPanelOpen(true); }}
           />
         )}
+
+        {/* Shape AI copilot panel */}
+        <AnimatePresence>
+          {chatPanelOpen && selectedBox && (
+            <ShapeChatPanel
+              workpackId={id!}
+              box={selectedBox}
+              onClose={() => setChatPanelOpen(false)}
+              onEditManually={() => { setChatPanelOpen(false); setEditDialogOpen(true); }}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Pipeline running overlay */}
         {isProcessing && (
