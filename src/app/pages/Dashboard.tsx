@@ -29,11 +29,33 @@ import {
 } from "../components/ui/dropdown-menu";
 import { Skeleton } from "../components/ui/skeleton";
 import { useAuthStore } from "../../store/authStore";
-import { useWorkpacks, useIngest, useDeleteWorkpack } from "../../hooks/useWorkpacks";
+import { useWorkpacks, useIngest, useDeleteWorkpack, useShape } from "../../hooks/useWorkpacks";
 import { InboxBell } from "../components/InboxBell";
 import { OnboardingModal, useOnboarding } from "../components/OnboardingModal";
 import type { Workpack } from "../../lib/api";
 import { toast } from "sonner";
+
+function RetryButton({ workpackId }: { workpackId: string }) {
+  const shape = useShape(workpackId);
+  return (
+    <button
+      onClick={async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          await shape.mutateAsync();
+          toast.success("Pipeline restarted");
+        } catch (err: any) {
+          toast.error(err.message ?? "Failed to retry");
+        }
+      }}
+      disabled={shape.isPending}
+      className="text-xs text-amber-700 underline underline-offset-2 hover:text-amber-900 disabled:opacity-50"
+    >
+      {shape.isPending ? "Retrying…" : "Retry"}
+    </button>
+  );
+}
 
 function stageLabel(w: Workpack) {
   if (w.processingStatus === "PROCESSING" || w.processingStatus === "PENDING")
@@ -326,9 +348,16 @@ export function Dashboard() {
                       </div>
                       <div className="flex items-center text-sm text-slate-500 gap-4">
                         <span>Updated {new Date(w.updatedAt).toLocaleDateString()}</span>
+                        {(w.processingStatus === "PROCESSING" || w.processingStatus === "PENDING") && (
+                          <span className="text-amber-600 flex items-center gap-2">
+                            <AlertCircle className="size-3" /> Stuck?
+                            <RetryButton workpackId={w.id} />
+                          </span>
+                        )}
                         {w.processingStatus === "FAILED" && (
-                          <span className="text-red-500 flex items-center gap-1">
+                          <span className="text-red-500 flex items-center gap-2">
                             <AlertCircle className="size-3" /> {w.failureReason ?? "Processing failed"}
+                            <RetryButton workpackId={w.id} />
                           </span>
                         )}
                       </div>

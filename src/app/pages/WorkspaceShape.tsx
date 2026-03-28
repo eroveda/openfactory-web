@@ -79,17 +79,35 @@ export function WorkspaceShape() {
   const isProcessing = workpack?.processingStatus === "PROCESSING" || workpack?.processingStatus === "PENDING";
   const activeBox = selectedBox ?? boxes[0] ?? null;
 
-  // Elapsed timer while processing
+  // Elapsed timer while processing.
+  // If the workpack was already PROCESSING when the page loaded, estimate elapsed
+  // time from updatedAt so we don't make the user wait 2 min for the retry option.
+  const alreadyStuckRef = useRef(false);
+  const initialElapsedRef = useRef(0);
+
+  useEffect(() => {
+    if (isProcessing && workpack?.updatedAt) {
+      const secondsAgo = Math.floor((Date.now() - new Date(workpack.updatedAt).getTime()) / 1000);
+      if (secondsAgo > 30) {
+        alreadyStuckRef.current = true;
+        initialElapsedRef.current = secondsAgo;
+      }
+    }
+  }, [workpack?.id]); // only on first load
+
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (isProcessing) {
-      setElapsed(0);
+      const start = initialElapsedRef.current;
+      setElapsed(start);
       timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
       setElapsed(0);
+      alreadyStuckRef.current = false;
+      initialElapsedRef.current = 0;
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isProcessing]);
