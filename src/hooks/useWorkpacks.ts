@@ -39,7 +39,12 @@ export function useShape(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => workpacksApi.shape(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["workpack", id] }),
+    onSuccess: (data) => {
+      // Set cache immediately so the Shape page renders PROCESSING right away
+      // without waiting for the next refetch cycle
+      qc.setQueryData(["workpack", id], data);
+      qc.invalidateQueries({ queryKey: ["workpack", id] });
+    },
   });
 }
 

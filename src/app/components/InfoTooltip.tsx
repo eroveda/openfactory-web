@@ -25,7 +25,7 @@ export function InfoTooltip({ title, body, footer }: InfoTooltipProps) {
         </TooltipTrigger>
         <TooltipContent
           side="right"
-          className="max-w-xs p-3 space-y-2"
+          className="max-w-xs p-3 space-y-2 bg-white border border-slate-200 shadow-md"
           sideOffset={6}
         >
           <p className="font-semibold text-xs text-slate-900">{title}</p>

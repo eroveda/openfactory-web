@@ -45,6 +45,8 @@ export interface Workpack {
   stage: WorkpackStage;
   processingStatus: ProcessingStatus;
   failureReason?: string;
+  pipelineStep?: string;
+  pipelineLog?: string;
   createdAt: string;
   updatedAt: string;
   owner?: { id: string; name: string; email: string; avatarUrl?: string };
