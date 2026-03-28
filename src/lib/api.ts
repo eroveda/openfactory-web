@@ -338,6 +338,29 @@ export async function downloadWorkpackZip(id: string): Promise<void> {
 }
 
 // -----------------------------------------------------------------------
+// Chat
+// -----------------------------------------------------------------------
+
+export interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+export interface ChatReply {
+  reply: string;
+  toolsExecuted: string[];
+  briefUpdated: boolean;
+}
+
+export const chatApi = {
+  send: (workpackId: string, message: string) =>
+    request<ChatReply>("POST", `/api/workpacks/${workpackId}/chat`, { message }),
+
+  clear: (workpackId: string) =>
+    request<void>("DELETE", `/api/workpacks/${workpackId}/chat`),
+};
+
+// -----------------------------------------------------------------------
 // Pins
 // -----------------------------------------------------------------------
 
