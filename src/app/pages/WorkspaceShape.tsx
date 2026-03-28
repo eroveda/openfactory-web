@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -78,6 +78,25 @@ export function WorkspaceShape() {
 
   const isProcessing = workpack?.processingStatus === "PROCESSING" || workpack?.processingStatus === "PENDING";
   const activeBox = selectedBox ?? boxes[0] ?? null;
+
+  // Elapsed timer while processing
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (isProcessing) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setElapsed(0);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [isProcessing]);
+
+  const elapsedLabel = elapsed > 0
+    ? `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`
+    : null;
 
   const handleReshape = async () => {
     try {
@@ -190,9 +209,16 @@ export function WorkspaceShape() {
 
       {/* Processing banner */}
       {isProcessing && (
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center gap-2 text-amber-800 text-sm">
-          <Loader2 className="size-4 animate-spin" />
-          Pipeline running — boxes will appear once complete…
+        <div className={`border-b px-6 py-3 flex items-center gap-2 text-sm ${
+          elapsed >= 120
+            ? "bg-red-50 border-red-200 text-red-800"
+            : "bg-amber-50 border-amber-200 text-amber-800"
+        }`}>
+          <Loader2 className="size-4 animate-spin flex-shrink-0" />
+          <span>Pipeline running — boxes will appear once complete…</span>
+          {elapsedLabel && (
+            <span className="ml-auto font-mono text-xs opacity-60">{elapsedLabel}</span>
+          )}
         </div>
       )}
 
@@ -341,10 +367,35 @@ export function WorkspaceShape() {
           ) : (
             <div className="h-full flex items-center justify-center">
               {isProcessing ? (
-                <div className="text-center text-slate-500">
-                  <Loader2 className="size-12 mx-auto mb-3 animate-spin opacity-30" />
-                  <p className="font-medium">Generating boxes…</p>
-                  <p className="text-sm mt-1">This takes about 30–60 seconds</p>
+                <div className="text-center max-w-sm">
+                  <Loader2 className="size-12 mx-auto mb-4 animate-spin text-blue-400 opacity-60" />
+                  <p className="font-medium text-slate-800 mb-1">Generating boxes…</p>
+                  {elapsedLabel && (
+                    <p className="text-sm font-mono text-slate-400 mb-3">{elapsedLabel}</p>
+                  )}
+                  {elapsed < 60 && (
+                    <p className="text-sm text-slate-500">This takes about 30–60 seconds.</p>
+                  )}
+                  {elapsed >= 60 && elapsed < 120 && (
+                    <div className="mt-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                      Still working — the pipeline can take up to 2 minutes with complex content.
+                    </div>
+                  )}
+                  {elapsed >= 120 && (
+                    <div className="mt-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800 space-y-2">
+                      <p className="font-medium">Taking too long — the pipeline may be stuck.</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2 text-red-700 border-red-300 hover:bg-red-50"
+                        onClick={handleReshape}
+                        disabled={shape.isPending}
+                      >
+                        {shape.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Settings className="size-3.5" />}
+                        Try reshaping
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : workpack?.processingStatus === "FAILED" ? (
                 <div className="text-center max-w-sm">
