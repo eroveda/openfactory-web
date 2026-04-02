@@ -105,7 +105,9 @@ export function DropZone({ attachments, workpackId, onUpload, onDelete }: DropZo
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{a.fileName}</p>
               <p className="text-xs text-slate-400">
-                {a.fileType === "image" ? "Image — not processed in pipeline yet" : "Text — feeds into pipeline"}
+                {a.fileType === "image"
+                  ? a.visualContext ? "Image — analyzed" : "Image — analyzing…"
+                  : "Text — feeds into pipeline"}
               </p>
             </div>
             {a.fileType === "image" && (

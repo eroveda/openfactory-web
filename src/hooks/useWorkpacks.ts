@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { workpacksApi, briefApi, boxesApi, planApi, handoffApi, pinsApi, userApi, membersApi, inboxApi, attachmentsApi, simulationApi } from "../lib/api";
+import { workpacksApi, briefApi, boxesApi, planApi, handoffApi, pinsApi, userApi, membersApi, inboxApi, attachmentsApi, boxAttachmentsApi, simulationApi } from "../lib/api";
 import type { MemberRole } from "../lib/api";
 
 // -----------------------------------------------------------------------
@@ -55,6 +55,7 @@ export function useAdvanceStage(id: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["workpack", id] });
       qc.invalidateQueries({ queryKey: ["workpacks"] });
+      qc.removeQueries({ queryKey: ["chat-history", id] });
     },
   });
 }
@@ -220,6 +221,15 @@ export function useAttachments(workpackId: string) {
     queryKey: ["attachments", workpackId],
     queryFn: () => attachmentsApi.list(workpackId),
     enabled: !!workpackId,
+    // Poll every 3s while any image is still being analyzed
+    refetchInterval: (query) => {
+      const attachments = query.state.data;
+      if (!attachments) return false;
+      const hasAnalyzing = attachments.some(
+        (a) => a.fileType === "image" && !a.visualContext
+      );
+      return hasAnalyzing ? 3000 : false;
+    },
   });
 }
 
@@ -241,12 +251,52 @@ export function useDeleteAttachment(workpackId: string) {
 }
 
 // -----------------------------------------------------------------------
+// Box Attachments
+// -----------------------------------------------------------------------
+
+export function useBoxAttachments(workpackId: string, boxId: string | null) {
+  return useQuery({
+    queryKey: ["box-attachments", workpackId, boxId],
+    queryFn: () => boxAttachmentsApi.list(workpackId, boxId!),
+    enabled: !!workpackId && !!boxId,
+  });
+}
+
+export function useAttachToBox(workpackId: string, boxId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (attachmentId: string) =>
+      boxAttachmentsApi.attach(workpackId, boxId, attachmentId),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["box-attachments", workpackId, boxId] }),
+  });
+}
+
+export function useDetachFromBox(workpackId: string, boxId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (attachmentId: string) =>
+      boxAttachmentsApi.detach(workpackId, boxId, attachmentId),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["box-attachments", workpackId, boxId] }),
+  });
+}
+
+// -----------------------------------------------------------------------
 // Simulation
 // -----------------------------------------------------------------------
 
 export function useSimulate(workpackId: string) {
   return useMutation({
     mutationFn: () => simulationApi.run(workpackId),
+  });
+}
+
+export function useBoxScores(workpackId: string) {
+  return useQuery({
+    queryKey: ["box-scores", workpackId],
+    queryFn: () => simulationApi.scores(workpackId),
+    enabled: !!workpackId,
   });
 }
 

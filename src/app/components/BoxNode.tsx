@@ -9,6 +9,8 @@ export type BoxNodeData = {
   outputCount: number;
   status: "draft" | "refining" | "ready";
   refinementProgress: number;
+  fieldsReady: number;
+  fieldsTotal: number;
   [key: string]: unknown;
 };
 
@@ -55,10 +57,18 @@ export const BoxNode = memo(({ data, selected }: NodeProps) => {
           <p className="text-xs text-slate-500 mb-3 line-clamp-2 leading-snug">{d.description}</p>
         )}
 
-        {/* I/O row */}
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <span>↓ {d.inputCount} inputs</span>
-          <span>↑ {d.outputCount} outputs</span>
+        {/* Refinement status */}
+        <div className="flex items-center justify-between text-xs">
+          {d.status === "ready" ? (
+            <span className="text-green-600 font-medium">Refined ✓</span>
+          ) : (
+            <span className="text-slate-400">{d.fieldsReady}/{d.fieldsTotal} fields defined</span>
+          )}
+          {d.status === "draft" && (
+            <span className="text-blue-500 font-medium flex items-center gap-1">
+              <Sparkles className="size-3" /> Click to refine
+            </span>
+          )}
         </div>
 
         {/* Progress bar */}

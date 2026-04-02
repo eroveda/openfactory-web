@@ -16,6 +16,17 @@ import {
 import dagre from "dagre";
 import "@xyflow/react/dist/style.css";
 import { BoxNode, type BoxNodeData } from "./BoxNode";
+
+function countBoxFields(box: Box | undefined): { ready: number; total: number } {
+  if (!box) return { ready: 0, total: 4 };
+  const checks = [
+    !!box.purpose,
+    box.instructions !== "[]" && !!box.instructions,
+    box.constraints !== "[]" && !!box.constraints,
+    box.acceptanceCriteria !== "[]" && !!box.acceptanceCriteria,
+  ];
+  return { ready: checks.filter(Boolean).length, total: 4 };
+}
 import { FileText, GitBranch } from "lucide-react";
 import { Button } from "./ui/button";
 import type { Box } from "../../lib/api";
@@ -39,6 +50,7 @@ interface WorkMapCanvasProps {
   boxes: Box[];
   planSteps: string | null;
   onBoxClick: (box: Box) => void;
+  projectTitle?: string;
 }
 
 // -----------------------------------------------------------------------
@@ -62,12 +74,25 @@ function layoutGraph(nodes: Node[], edges: Edge[]) {
 }
 
 // -----------------------------------------------------------------------
+// Root node component
+// -----------------------------------------------------------------------
+
+function RootNode({ data }: { data: { label: string } }) {
+  return (
+    <div className="bg-slate-800 text-white rounded-2xl px-6 py-4 shadow-lg border-2 border-slate-700 min-w-[220px] text-center">
+      <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">Project</p>
+      <p className="font-bold text-base leading-tight">{data.label}</p>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------
 
-const nodeTypes = { box: BoxNode };
+const nodeTypes = { box: BoxNode, root: RootNode };
 
-export function WorkMapCanvas({ boxes, planSteps, onBoxClick }: WorkMapCanvasProps) {
+export function WorkMapCanvas({ boxes, planSteps, onBoxClick, projectTitle }: WorkMapCanvasProps) {
   const steps: ExecutionStep[] = useMemo(() => {
     if (!planSteps) return [];
     try { return JSON.parse(planSteps) as ExecutionStep[]; }
@@ -81,31 +106,63 @@ export function WorkMapCanvas({ boxes, planSteps, onBoxClick }: WorkMapCanvasPro
       ? steps
       : boxes.map((b, i) => ({ boxId: b.id, order: i, dependsOn: [] as string[], parallel: false, stepId: b.id, boxTitle: b.title, requiresApproval: false, checkpoint: false }));
 
-    const rawNodes: Node[] = source.map(s => {
+    const ROOT_ID = "__root__";
+
+    const rootNode: Node = {
+      id: ROOT_ID,
+      type: "root",
+      position: { x: 0, y: 0 },
+      data: { label: projectTitle ?? "Project" },
+      selectable: false,
+    };
+
+    const rawNodes: Node[] = [rootNode, ...source.map(s => {
       const box = boxMap.get(s.boxId);
       const outCount = source.filter(x => x.dependsOn?.includes(s.boxId)).length;
+      const { ready: fieldsReady, total: fieldsTotal } = countBoxFields(box);
       const data: BoxNodeData = {
         label:               box?.title ?? s.boxTitle,
         description:         box?.purpose ?? "",
         inputCount:          s.dependsOn?.length ?? 0,
         outputCount:         outCount,
-        status:              box?.status === "READY" ? "ready" : s.parallel ? "refining" : "draft",
-        refinementProgress:  box?.status === "READY" ? 100 : s.parallel ? 60 : 20,
+        status:              box?.status === "READY" ? "ready" : fieldsReady > 0 ? "refining" : "draft",
+        refinementProgress:  box?.status === "READY" ? 100 : Math.round((fieldsReady / fieldsTotal) * 100),
+        fieldsReady,
+        fieldsTotal,
       };
       return { id: s.boxId, type: "box", position: { x: 0, y: 0 }, data, className: "group" };
-    });
+    })];
 
     const rawEdges: Edge[] = [];
+    const allBoxIds = new Set(source.map(s => s.boxId));
+    const hasParent = new Set<string>();
+
     source.forEach(s => {
       s.dependsOn?.forEach(depId => {
-        rawEdges.push({
-          id: `${depId}->${s.boxId}`,
-          source: depId,
-          target: s.boxId,
-          animated: true,
-          style: { stroke: "#94a3b8", strokeDasharray: "5,4", strokeWidth: 1.5 },
-        });
+        if (allBoxIds.has(depId)) {
+          rawEdges.push({
+            id: `${depId}->${s.boxId}`,
+            source: depId,
+            target: s.boxId,
+            animated: false,
+            style: { stroke: "#94a3b8", strokeWidth: 1.5 },
+          });
+          hasParent.add(s.boxId);
+        }
       });
+    });
+
+    // Connect root to all top-level boxes (no parent)
+    source.forEach(s => {
+      if (!hasParent.has(s.boxId)) {
+        rawEdges.push({
+          id: `${ROOT_ID}->${s.boxId}`,
+          source: ROOT_ID,
+          target: s.boxId,
+          animated: false,
+          style: { stroke: "#475569", strokeWidth: 2 },
+        });
+      }
     });
 
     return { initialNodes: layoutGraph(rawNodes, rawEdges), initialEdges: rawEdges };

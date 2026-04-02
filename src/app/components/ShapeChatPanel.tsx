@@ -1,16 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Send, Loader2, RotateCcw, Sparkles } from "lucide-react";
+import { X, Send, Loader2, RotateCcw, Sparkles, GitBranch } from "lucide-react";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { useChat } from "../../hooks/useChat";
 import type { Box } from "../../lib/api";
+import ReactMarkdown from "react-markdown";
 
 interface ShapeChatPanelProps {
   workpackId: string;
   box: Box;
   onClose: () => void;
   onEditManually?: () => void;
+  onReshape?: () => void;
 }
 
 function ChatBubble({ role, content }: { role: string; content: string }) {
@@ -27,24 +29,24 @@ function ChatBubble({ role, content }: { role: string; content: string }) {
         </div>
       )}
       <div
-        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
           isUser
-            ? "bg-slate-800 text-white rounded-br-sm"
-            : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"
+            ? "bg-slate-800 text-white rounded-br-sm whitespace-pre-wrap"
+            : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1"
         }`}
       >
-        {content}
+        {isUser ? content : <ReactMarkdown>{content}</ReactMarkdown>}
       </div>
     </motion.div>
   );
 }
 
-export function ShapeChatPanel({ workpackId, box, onClose, onEditManually }: ShapeChatPanelProps) {
+export function ShapeChatPanel({ workpackId, box, onClose, onEditManually, onReshape }: ShapeChatPanelProps) {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { messages, send, reset, isPending } = useChat(workpackId, {
+  const { messages, send, reset, isPending, reshapeSuggestion, clearReshape } = useChat(workpackId, {
     id: box.id,
     title: box.title,
     purpose: box.purpose,
@@ -119,12 +121,30 @@ export function ShapeChatPanel({ workpackId, box, onClose, onEditManually }: Sha
         <div ref={bottomRef} />
       </div>
 
+      {/* Split suggestion banner */}
+      {reshapeSuggestion && onReshape && (
+        <div className="mx-4 mb-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs">
+          <p className="font-medium text-amber-800 mb-1 flex items-center gap-1.5">
+            <GitBranch className="size-3.5" /> Structural change suggested
+          </p>
+          <p className="text-amber-700 mb-2">{reshapeSuggestion}</p>
+          <div className="flex gap-2">
+            <Button size="sm" className="h-7 text-xs gap-1" onClick={() => { clearReshape(); onReshape(); }}>
+              Reshape <GitBranch className="size-3" />
+            </Button>
+            <button onClick={clearReshape} className="text-amber-600 hover:text-amber-800 text-xs">
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Input */}
       <div className="border-t bg-white px-4 py-3 flex-shrink-0">
         <div className="flex gap-2 items-end">
           <Textarea
             ref={textareaRef}
-            placeholder="Refiná este box…"
+            placeholder="Refine this box…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {

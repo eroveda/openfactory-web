@@ -92,6 +92,7 @@ export interface Box {
   dependencies: string;
   acceptanceCriteria: string;
   handoff: string;
+  executionContext?: string | null;
   status: string;
   orderIndex: number;
 }
@@ -215,6 +216,7 @@ export interface Attachment {
   fileType: FileType;
   storageUrl: string;
   contentText?: string;
+  visualContext?: string | null;
   createdAt: string;
 }
 
@@ -231,6 +233,29 @@ export const attachmentsApi = {
 
   delete: (workpackId: string, id: string) =>
     request<void>("DELETE", `/api/workpacks/${workpackId}/attachments/${id}`),
+};
+
+// -----------------------------------------------------------------------
+// Box Attachments
+// -----------------------------------------------------------------------
+
+export interface BoxAttachment {
+  id: string;
+  boxId: string;
+  attachment: Attachment & { visualContext?: string | null };
+  boxContext: string | null;
+  createdAt: string;
+}
+
+export const boxAttachmentsApi = {
+  list: (workpackId: string, boxId: string) =>
+    request<BoxAttachment[]>("GET", `/api/workpacks/${workpackId}/boxes/${boxId}/attachments`),
+
+  attach: (workpackId: string, boxId: string, attachmentId: string) =>
+    request<BoxAttachment>("POST", `/api/workpacks/${workpackId}/boxes/${boxId}/attachments/${attachmentId}`),
+
+  detach: (workpackId: string, boxId: string, attachmentId: string) =>
+    request<void>("DELETE", `/api/workpacks/${workpackId}/boxes/${boxId}/attachments/${attachmentId}`),
 };
 
 // -----------------------------------------------------------------------
@@ -318,6 +343,8 @@ export interface SimulationResult {
 export const simulationApi = {
   run: (workpackId: string) =>
     request<SimulationResult>("POST", `/api/workpacks/${workpackId}/simulate`),
+  scores: (workpackId: string) =>
+    request<SimulationResult>("GET", `/api/workpacks/${workpackId}/simulate`),
 };
 
 // -----------------------------------------------------------------------
@@ -350,9 +377,14 @@ export interface ChatReply {
   reply: string;
   toolsExecuted: string[];
   briefUpdated: boolean;
+  reshapeSuggestion: string | null;
+  proceedSuggested: boolean;
 }
 
 export const chatApi = {
+  getHistory: (workpackId: string) =>
+    request<ChatMessage[]>("GET", `/api/workpacks/${workpackId}/chat`),
+
   send: (workpackId: string, message: string) =>
     request<ChatReply>("POST", `/api/workpacks/${workpackId}/chat`, { message }),
 
@@ -393,4 +425,49 @@ export const userApi = {
 
   update: (data: Partial<UserProfile>) =>
     request<UserProfile>("PATCH", "/api/me", data),
+};
+
+// -----------------------------------------------------------------------
+// Usage
+// -----------------------------------------------------------------------
+
+export interface UsageLog {
+  id: string;
+  createdAt: string;
+  provider: string;
+  model: string;
+  actionType: string;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  latencyMs: number | null;
+  success: boolean;
+  workpackId: string | null;
+  userId: string | null;
+}
+
+export interface UsageSummaryRow {
+  actionType: string;
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  failures: number;
+  avgLatencyMs: number;
+}
+
+export interface MyUsageToday {
+  chatsThisHour: number;
+  limit: number;
+  remaining: number;
+}
+
+export const usageApi = {
+  recent: (limit = 100) =>
+    request<UsageLog[]>("GET", `/api/usage/recent?limit=${limit}`),
+
+  summary: () =>
+    request<UsageSummaryRow[]>("GET", "/api/usage/summary"),
+
+  myToday: () =>
+    request<MyUsageToday>("GET", "/api/usage/my-today"),
 };

@@ -2,10 +2,12 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
+import { WorkspaceList } from "./pages/WorkspaceList";
 import { Profile } from "./pages/Profile";
 import { WorkspaceDefine } from "./pages/WorkspaceDefine";
 import { WorkspaceShape } from "./pages/WorkspaceShape";
 import { WorkspaceBox } from "./pages/WorkspaceBox";
+import { UsageAdmin } from "./pages/UsageAdmin";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 export const router = createBrowserRouter([
@@ -22,6 +24,10 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
   },
   {
+    path: "/workspaces",
+    element: <ProtectedRoute><WorkspaceList /></ProtectedRoute>,
+  },
+  {
     path: "/profile",
     element: <ProtectedRoute><Profile /></ProtectedRoute>,
   },
@@ -36,6 +42,10 @@ export const router = createBrowserRouter([
   {
     path: "/workspace/:id/box",
     element: <ProtectedRoute><WorkspaceBox /></ProtectedRoute>,
+  },
+  {
+    path: "/admin/usage",
+    element: <ProtectedRoute><UsageAdmin /></ProtectedRoute>,
   },
   {
     path: "*",
